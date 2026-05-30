@@ -3,541 +3,902 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Professional English Quiz</title>
+    <title>Official English Exam Simulator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap'); /* الخط العربي */
+        @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=Poppins:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
         
         body {
             font-family: 'Poppins', sans-serif;
             background-color: #f3f4f6;
+            color: #1f2937;
         }
+        
+        .exam-paper {
+            font-family: 'Merriweather', serif;
+            background-image: repeating-linear-gradient(transparent, transparent 31px, #f9fafb 31px, #f9fafb 32px);
+            line-height: 32px;
+            background-attachment: local;
+        }
+
         .arabic-text {
             font-family: 'Tajawal', sans-serif;
         }
-        .option-btn {
-            transition: all 0.3s ease;
-        }
-        .option-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
-        .option-btn:disabled {
-            cursor: not-allowed;
-        }
-        .correct-answer {
-            background-color: #10b981 !important;
-            color: white !important;
-            border-color: #10b981 !important;
-        }
-        .wrong-answer {
-            background-color: #ef4444 !important;
-            color: white !important;
-            border-color: #ef4444 !important;
-        }
+
         .hide {
             display: none !important;
         }
+
+        .question-block {
+            background-color: rgba(255, 255, 255, 0.98);
+            border: 1px solid #d1d5db;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .radio-custom:checked + div {
+            border-color: #4f46e5;
+            background-color: #e0e7ff;
+            color: #4f46e5;
+            font-weight: bold;
+        }
+        
+        textarea {
+            background-image: repeating-linear-gradient(transparent, transparent 31px, #f3f4f6 31px, #f3f4f6 32px);
+            line-height: 32px;
+            padding: 8px 12px;
+        }
+        
+        select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+
+        /* Custom Modal for alerts */
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4">
+<body class="min-h-screen">
 
-    <!-- App Container -->
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-4xl overflow-hidden relative">
-        
-        <!-- Header -->
-        <header class="bg-indigo-600 text-white p-6 text-center">
-            <h1 class="text-3xl font-bold"><i class="fa-solid fa-graduation-cap mr-2"></i> English Exams Quiz</h1>
-            <p class="text-indigo-200 mt-2 text-sm">Test your knowledge with 200 questions from previous exams</p>
-        </header>
-
-        <!-- Start Screen -->
-        <div id="start-screen" class="p-8 text-center flex flex-col items-center justify-center min-h-[400px]">
-            <div class="bg-indigo-100 text-indigo-600 p-4 rounded-full mb-6 text-5xl">
-                <i class="fa-solid fa-book-open-reader"></i>
+    <!-- Navbar -->
+    <nav class="bg-gray-900 text-white p-4 shadow-lg sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <i class="fa-solid fa-building-columns text-2xl text-blue-400"></i>
+                <h1 class="text-xl font-bold hidden sm:block">Ministry of Education - Exam Simulator</h1>
+                <h1 class="text-xl font-bold sm:hidden">Exam Simulator</h1>
             </div>
-            <h2 class="text-2xl font-bold text-gray-800 mb-4">Ready to test yourself?</h2>
-            <p class="text-gray-600 mb-8 max-w-md mx-auto">This quiz contains 200 questions covering grammar, vocabulary, reading comprehension, and definitions extracted strictly from previous exams.</p>
-            <button id="start-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-8 rounded-full shadow-lg transition duration-300 transform hover:scale-105">
-                Start Quiz Now <i class="fa-solid fa-arrow-right ml-2"></i>
+            <div class="flex items-center space-x-3">
+                <button id="translate-toggle" class="bg-blue-100 hover:bg-blue-200 text-blue-700 py-1.5 px-4 rounded-lg transition-colors text-sm font-bold shadow-sm flex items-center arabic-text">
+                    <i class="fa-solid fa-language mr-2"></i> ترجمة
+                </button>
+                <div id="timer-display" class="hide font-mono text-xl font-bold text-yellow-400 bg-gray-800 px-4 py-1 rounded-lg border border-gray-700 shadow-inner">
+                    <i class="fa-regular fa-clock mr-2"></i><span id="time">02:00:00</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Custom Alert Box -->
+    <div id="custom-alert" class="hide fixed inset-0 z-[100] flex items-center justify-center modal-overlay">
+        <div class="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full mx-4 text-center transform scale-100 transition-transform">
+            <div class="text-red-500 text-5xl mb-4"><i class="fa-solid fa-circle-exclamation"></i></div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2 arabic-text" id="alert-title">تنبيه</h3>
+            <p class="text-gray-600 mb-6 font-medium arabic-text" id="alert-message">يرجى إكمال البيانات المطلوبة.</p>
+            <button id="close-alert-btn" class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-6 rounded-lg shadow w-full transition duration-300">
+                حسناً
+            </button>
+        </div>
+    </div>
+
+    <div class="max-w-5xl mx-auto p-4 my-8">
+        
+        <!-- Start Screen -->
+        <div id="start-screen" class="bg-white rounded-2xl shadow-2xl p-8 md:p-12 text-center transform transition-all">
+            <div class="w-24 h-24 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl shadow-inner">
+                <i class="fa-solid fa-user-graduate"></i>
+            </div>
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">Final English Examination</h2>
+            <p class="text-gray-500 mb-8 arabic-text text-lg">الامتحان الشامل للغة الإنجليزية - يرجى اختيار السنة للامتحان</p>
+            
+            <div class="max-w-md mx-auto text-left bg-gray-50 p-6 rounded-xl border border-gray-200 mb-8">
+                <h3 class="font-bold text-gray-700 mb-4 border-b pb-2"><i class="fa-solid fa-circle-info mr-2 text-blue-500"></i>Exam Instructions:</h3>
+                <ul class="space-y-3 text-sm text-gray-600 font-medium">
+                    <li><i class="fa-solid fa-check text-green-500 mr-2"></i> The exam consists of 6 main questions.</li>
+                    <li><i class="fa-solid fa-check text-green-500 mr-2"></i> Time allowed is exactly 2 Hours.</li>
+                    <li><i class="fa-solid fa-check text-green-500 mr-2"></i> Q1 to Q5 will be auto-graded immediately.</li>
+                    <li><i class="fa-solid fa-check text-green-500 mr-2"></i> Q6 (Composition) requires manual grading.</li>
+                </ul>
+            </div>
+
+            <div class="max-w-md mx-auto mb-8 space-y-4">
+                <input type="text" id="student-name" placeholder="Enter your full name..." class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors font-semibold text-center text-gray-800" required>
+                
+                <select id="exam-year-select" class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors font-bold text-center text-gray-800 arabic-text text-lg cursor-pointer bg-white">
+                    <option value="" disabled selected>-- اختر السنة والدور --</option>
+                    <!-- Options populated via JS -->
+                </select>
+            </div>
+
+            <button id="start-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-10 rounded-full shadow-lg transition duration-300 transform hover:-translate-y-1 hover:shadow-xl text-lg w-full md:w-auto">
+                Start Examination <i class="fa-solid fa-play ml-2"></i>
             </button>
         </div>
 
-        <!-- Quiz Screen -->
-        <div id="quiz-screen" class="p-8 hide min-h-[400px] flex flex-col">
-            <!-- Progress Info & Translate Button -->
-            <div class="flex justify-between items-center mb-6 text-sm font-semibold text-gray-500 flex-wrap gap-3">
-                <span id="question-counter" class="bg-gray-100 py-1 px-3 rounded-full">Question: 1/200</span>
-                
-                <button id="translate-btn" class="bg-blue-100 hover:bg-blue-200 text-blue-700 py-1.5 px-4 rounded-full transition-colors text-sm font-bold shadow-sm flex items-center arabic-text">
-                    <i class="fa-solid fa-language mr-2"></i> ترجمة السؤال
-                </button>
-
-                <span id="score-counter" class="bg-indigo-50 text-indigo-600 py-1 px-3 rounded-full"><i class="fa-solid fa-star mr-1"></i> Score: 0</span>
-            </div>
-
-            <!-- Progress Bar -->
-            <div class="w-full bg-gray-200 rounded-full h-2.5 mb-8">
-                <div id="progress-bar" class="bg-indigo-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
-            </div>
-
-            <!-- Question Area -->
-            <div class="flex-grow">
-                <h2 id="question-text" class="text-xl md:text-2xl font-semibold text-gray-800 mb-3 leading-relaxed">
-                    <!-- Question will be injected here -->
-                </h2>
-                
-                <h3 id="question-translation" class="text-lg font-medium text-blue-600 mb-8 leading-relaxed hide text-right arabic-text" dir="rtl">
-                    <!-- Translation will be injected here -->
-                </h3>
-
-                <!-- Options -->
-                <div id="options-container" class="space-y-3 mb-8">
-                    <!-- Options will be injected here -->
+        <!-- Exam Paper Screen -->
+        <div id="exam-screen" class="hide bg-white rounded-xl shadow-2xl p-4 md:p-10 relative">
+            
+            <!-- Exam Header -->
+            <div class="border-b-4 border-double border-gray-800 pb-6 mb-8 text-center">
+                <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+                    <div class="text-center md:text-left">
+                        <p class="font-bold text-gray-800">Subject: English</p>
+                        <p class="font-bold text-gray-800">Time: 2 Hours</p>
+                    </div>
+                    <div class="text-center order-first md:order-none mb-4 md:mb-0">
+                        <h2 class="text-2xl font-black uppercase tracking-wider text-gray-900">Republic of Iraq</h2>
+                        <p class="font-bold text-gray-700">Ministry of Education</p>
+                        <p class="font-bold text-blue-600 mt-1 arabic-text text-lg" id="exam-title-display"></p>
+                    </div>
+                    <div class="text-center md:text-right">
+                        <p class="font-bold text-gray-800">Candidate: <span id="display-name" class="text-blue-600 uppercase border-b border-blue-600 pb-1">Student</span></p>
+                        <p class="font-bold text-gray-800 mt-2">Total Marks: 100</p>
+                    </div>
                 </div>
             </div>
 
-            <!-- Next Button -->
-            <div class="text-right">
-                <button id="next-btn" class="hide bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-8 rounded-lg shadow transition duration-300">
-                    Next Question <i class="fa-solid fa-angle-right ml-1"></i>
-                </button>
-            </div>
+            <form id="exam-form" class="exam-paper space-y-10 text-base md:text-lg">
+                <div id="dynamic-questions-container">
+                    <!-- Questions injected here by JS -->
+                </div>
+
+                <!-- Submit Button -->
+                <div class="text-center pt-8 border-t-2 border-dashed border-gray-300 mt-12">
+                    <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-8 md:px-12 rounded-full shadow-xl transition duration-300 transform hover:-translate-y-1 hover:shadow-2xl text-xl flex items-center justify-center mx-auto w-full md:w-auto">
+                        <i class="fa-solid fa-file-signature mr-3"></i> Submit Examination
+                    </button>
+                </div>
+            </form>
         </div>
 
         <!-- Result Screen -->
-        <div id="result-screen" class="p-8 hide text-center flex flex-col items-center justify-center min-h-[400px]">
-            <div id="result-icon" class="text-6xl mb-6">
-                <!-- Icon injected via JS -->
-            </div>
-            <h2 id="result-title" class="text-3xl font-bold text-gray-800 mb-4">Quiz Completed!</h2>
-            <p class="text-gray-600 mb-2">You answered <span id="final-score" class="font-bold text-indigo-600 text-xl">0</span> out of <span class="font-bold text-gray-800 text-xl">200</span> questions correctly.</p>
-            <p id="result-message" class="text-lg font-medium mb-8"></p>
+        <div id="result-screen" class="hide bg-white rounded-2xl shadow-2xl p-8 md:p-12 text-center">
             
-            <button id="restart-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-8 rounded-full shadow-lg transition duration-300 transform hover:scale-105">
-                <i class="fa-solid fa-rotate-right mr-2"></i> Retake Quiz
+            <div id="score-circle" class="w-36 h-36 mx-auto rounded-full border-8 border-gray-200 flex items-center justify-center mb-6 relative shadow-inner bg-gray-50">
+                <span id="final-score" class="text-5xl font-black text-gray-800">--</span>
+                <span class="text-lg text-gray-500 absolute bottom-4 font-bold">/ 80</span>
+            </div>
+
+            <h2 id="result-greeting" class="text-3xl font-bold text-gray-800 mb-2">Exam Submitted!</h2>
+            <p class="text-gray-600 mb-8 font-medium">Candidate: <span id="result-name" class="text-blue-600 font-bold uppercase"></span></p>
+
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-3 max-w-4xl mx-auto mb-8 font-sans">
+                <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100 shadow-sm">
+                    <p class="text-xs text-indigo-500 font-bold uppercase tracking-wider mb-1">Q1 (Reading)</p>
+                    <p class="text-2xl font-black text-indigo-800" id="score-q1">0/20</p>
+                </div>
+                <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100 shadow-sm">
+                    <p class="text-xs text-emerald-500 font-bold uppercase tracking-wider mb-1">Q2 (Textbooks)</p>
+                    <p class="text-2xl font-black text-emerald-800" id="score-q2">0/15</p>
+                </div>
+                <div class="bg-purple-50 p-4 rounded-xl border border-purple-100 shadow-sm">
+                    <p class="text-xs text-purple-500 font-bold uppercase tracking-wider mb-1">Q3 (Grammar)</p>
+                    <p class="text-2xl font-black text-purple-800" id="score-q3">0/20</p>
+                </div>
+                <div class="bg-orange-50 p-4 rounded-xl border border-orange-100 shadow-sm">
+                    <p class="text-xs text-orange-500 font-bold uppercase tracking-wider mb-1">Q4&5 (Vocab)</p>
+                    <p class="text-2xl font-black text-orange-800" id="score-q45">0/25</p>
+                </div>
+                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 col-span-2 md:col-span-1 shadow-sm flex flex-col justify-center">
+                    <p class="text-xs text-blue-500 font-bold uppercase tracking-wider mb-1">Q6 (Writing)</p>
+                    <p class="text-sm font-bold text-blue-800 mt-1"><i class="fa-solid fa-hourglass-half mr-1 animate-pulse"></i> Pending</p>
+                </div>
+            </div>
+
+            <div class="bg-yellow-50 text-yellow-800 p-4 rounded-lg border border-yellow-200 max-w-2xl mx-auto mb-8 text-sm text-left arabic-text flex items-start shadow-sm">
+                <i class="fa-solid fa-circle-info mt-1 mr-3 text-yellow-600 text-lg"></i> 
+                <span><strong>ملاحظة هامة:</strong> الدرجة الظاهرة أعلاه هي من (80 درجة). السؤال السادس (الإنشاء) مخصص له (20 درجة) ولا يتم تصحيحه إلكترونياً بل يحتاج إلى تصحيح وتقييم يدوي من قبل الأستاذ المختص.</span>
+            </div>
+
+            <button onclick="location.reload()" class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300 transform hover:-translate-y-1">
+                <i class="fa-solid fa-rotate-right mr-2"></i> Retake Exam
             </button>
         </div>
 
     </div>
 
     <script>
-        // 200 Questions Database Extracted strictly from the provided text with Arabic translations
-        const quizData = [
-            // Reading & Textbooks (1-40)
-            { q: "Nutrients provide ------------ for activity.", ar_q: "توفر العناصر الغذائية ------------ للنشاط.", options: ["water", "energy", "sleep"], answer: "energy" },
-            { q: "A tunnel is dug in the ---------- to take out minerals.", ar_q: "يتم حفر نفق في ---------- لاستخراج المعادن.", options: ["sky", "ground", "ocean"], answer: "ground" },
-            { q: "Mechatronics is a dynamic field.", ar_q: "الميكاترونكس مجال ديناميكي (متجدد).", options: ["True", "False"], answer: "True" },
-            { q: "------------ can measure the physical quality and convert it into a signal.", ar_q: "------------ يمكنه قياس الخاصية الفيزيائية وتحويلها إلى إشارة.", options: ["Actuator", "Sensor", "Virus"], answer: "Sensor" },
-            { q: "Water pollution is not dangerous to life.", ar_q: "تلوث المياه ليس خطيراً على الحياة.", options: ["True", "False"], answer: "False" },
-            { q: "Nations impose restrictions to ------------ pollution.", ar_q: "تفرض الدول قيوداً لـ ------------ التلوث.", options: ["increase", "reduce", "stop"], answer: "reduce" },
-            { q: "The oldest known mine is the 'Lion Cave' in Northern Africa.", ar_q: "أقدم منجم معروف هو 'كهف الأسد' في شمال أفريقيا.", options: ["True", "False"], answer: "False" },
-            { q: "A vacuum seal ------------ air from getting back into product.", ar_q: "الختم المفرغ (التفريغ) ------------ الهواء من العودة إلى المنتج.", options: ["allows", "prevents", "increases"], answer: "prevents" },
-            { q: "Working in a coal mine could be a very dangerous job.", ar_q: "العمل في منجم فحم يمكن أن يكون وظيفة خطيرة جداً.", options: ["True", "False"], answer: "True" },
-            { q: "Industrial pollution has a ------------ impact on human lives and health.", ar_q: "التلوث الصناعي له تأثير ------------ على حياة الإنسان وصحته.", options: ["positive", "negative", "neutral"], answer: "negative" },
-            { q: "Materials recovered by mining include only coal.", ar_q: "المواد المستخرجة بالتعدين تشمل الفحم فقط.", options: ["True", "False"], answer: "False" },
-            { q: "Mechatronics devices are ------------ than their counterparts.", ar_q: "أجهزة الميكاترونكس ------------ من نظيراتها.", options: ["worse", "better", "slower"], answer: "better" },
-            { q: "Canning is an important safe method for preserving food.", ar_q: "التعليب طريقة آمنة ومهمة لحفظ الطعام.", options: ["True", "False"], answer: "True" },
-            { q: "Carbon monoxide is not emitted by cars.", ar_q: "أول أكسيد الكربون لا ينبعث من السيارات.", options: ["True", "False"], answer: "False" },
-            { q: "We can preserve food for a long time.", ar_q: "يمكننا حفظ الطعام لفترة طويلة.", options: ["True", "False"], answer: "True" },
-            { q: "Pure water lacks taste and smell.", ar_q: "الماء النقي يفتقر إلى الطعم والرائحة.", options: ["True", "False"], answer: "True" },
-            { q: "The internet is also called a search engine.", ar_q: "الإنترنت يسمى أيضاً بمحرك البحث.", options: ["True", "False"], answer: "False" },
-            { q: "Some mined substances are ------------ because they are found at or near the surface.", ar_q: "بعض المواد المعدنية ------------ لأنها توجد على السطح أو بالقرب منه.", options: ["expensive", "cheap", "rare"], answer: "cheap" },
-            { q: "Mechatronics is a branch of ------------", ar_q: "الميكاترونكس هو فرع من فروع ------------", options: ["medicine", "engineering", "agriculture"], answer: "engineering" },
-            { q: "A fast internet connection is called a ------------", ar_q: "اتصال الإنترنت السريع يسمى ------------", options: ["broadband", "calculus", "waste"], answer: "broadband" },
-            { q: "Electronic devices are components for controlling the flow of electrical currents.", ar_q: "الأجهزة الإلكترونية هي مكونات للتحكم في تدفق التيارات الكهربائية.", options: ["True", "False"], answer: "True" },
-            { q: "Electronics comprises physics, engineering, and technology.", ar_q: "تتضمن الإلكترونيات الفيزياء والهندسة والتكنولوجيا.", options: ["True", "False"], answer: "True" },
-            { q: "Electronic devices may help to enhance speaking and listening.", ar_q: "قد تساعد الأجهزة الإلكترونية في تحسين التحدث والاستماع.", options: ["True", "False"], answer: "True" },
-            { q: "The ability of electronic devices to act as ---------- makes digital information-processing possible.", ar_q: "قدرة الأجهزة الإلكترونية على العمل كـ ---------- تجعل معالجة المعلومات الرقمية ممكنة.", options: ["switches", "minerals", "foods"], answer: "switches" },
-            { q: "How many safe ways of processing food are there?", ar_q: "كم عدد الطرق الآمنة لمعالجة الطعام؟", options: ["Two", "Three", "Four"], answer: "Two" },
-            { q: "Factory workers shouldn't reduce industrial waste.", ar_q: "يجب على عمال المصانع ألا يقللوا من النفايات الصناعية.", options: ["True", "False"], answer: "False" },
-            { q: "What are mobile phones?", ar_q: "ما هي الهواتف المحمولة؟", options: ["Small electronic devices", "Large heavy devices", "Mechanical tools"], answer: "Small electronic devices" },
-            { q: "How do mobile phones work?", ar_q: "كيف تعمل الهواتف المحمولة؟", options: ["By sending signals across the globe", "By using cables", "By solar power"], answer: "By sending signals across the globe" },
-            { q: "Are mobile phones useful devices?", ar_q: "هل الهواتف المحمولة أجهزة مفيدة؟", options: ["Yes, they are", "No, they are useless", "Only for games"], answer: "Yes, they are" },
-            { q: "Long hours of mobile phone use in one sitting causes...", ar_q: "استخدام الهاتف المحمول لساعات طويلة في جلسة واحدة يسبب...", options: ["strain on eyes, neck and backbones", "better vision", "more energy"], answer: "strain on eyes, neck and backbones" },
-            { q: "A vacuum seal prevents water from getting back into the product.", ar_q: "يمنع الختم المفرغ (التفريغ) الماء من العودة إلى المنتج.", options: ["True", "False"], answer: "False" },
-            { q: "The word automotive comes from the Greek 'autos' meaning...", ar_q: "كلمة automotive تأتي من الكلمة اليونانية 'autos' وتعني...", options: ["self", "car", "motion"], answer: "self" },
-            { q: "China is the world's largest producer of vehicles.", ar_q: "الصين هي أكبر منتج للمركبات في العالم.", options: ["True", "False"], answer: "True" },
-            { q: "Germany is famous for producing iconic cars like BMW.", ar_q: "تشتهر ألمانيا بإنتاج سيارات أيقونية مثل BMW.", options: ["True", "False"], answer: "True" },
-            { q: "White color is the safest for cars because...", ar_q: "اللون الأبيض هو الأكثر أماناً للسيارات لأنه...", options: ["it is the most visible at night", "it is cheap", "it looks beautiful"], answer: "it is the most visible at night" },
-            { q: "Who creates and posts information through web pages?", ar_q: "من يقوم بإنشاء ونشر المعلومات عبر صفحات الويب؟", options: ["Companies, organizations and individuals", "Only governments", "Only schools"], answer: "Companies, organizations and individuals" },
-            { q: "Do sensors allow the microprocessor to monitor the state?", ar_q: "هل تسمح المستشعرات (sensors) للمعالج الدقيق بمراقبة الحالة؟", options: ["True", "False"], answer: "True" },
-            { q: "What is a network?", ar_q: "ما هي الشبكة (Network)؟", options: ["Two or more computers connected together", "A type of food", "A mechanical engine"], answer: "Two or more computers connected together" },
-            { q: "What percentage of the weight of all organisms is water?", ar_q: "ما هي نسبة وزن الماء في جميع الكائنات الحية؟", options: ["40 to 90 percent", "10 to 20 percent", "90 to 100 percent"], answer: "40 to 90 percent" },
-            { q: "The cause of cloudiness in a glass of water is...", ar_q: "سبب التعكر في كوب الماء هو...", options: ["tiny air bubbles", "salt", "minerals"], answer: "tiny air bubbles" },
+        // Database of ALL Exams (Extracted directly from the prompt text strictly)
+        const examsDB = {
+            "2021_2": {
+                title: "2021 - الدور الثاني",
+                passage: "Electronic devices are components for controlling the flow of electrical currents for the purpose of information processing and system control. Electronics comprises the physics, engineering, technology and applications that deal with the emission, flow and control of electrons in vacuum and matter. Electronics has had a major effect on the development of modern society. Basic electronic components include: capacitors, resistors, diodes, transistors, etc. The ability of electronic devices to act as switches makes digital information-processing possible. Electronic devices may help to enhance speaking, listening, and creative skills. Examples of electronic devices are: Televisions, laptops, DVD players, desktop computers, iPods, mobile phones, fans, cameras, game consoles, printers, and radios, etc.",
+                q1: [
+                    { q: "What are electronic devices?", c: "Components for controlling the flow of electrical currents", w: ["Devices only used for gaming", "Mechanical tools for moving heavy objects"] },
+                    { q: "Electronic devices may help to enhance ----------- and creative skills.", c: "speaking, listening", w: ["running, jumping", "eating, sleeping"] },
+                    { q: "The ability of electronic devices to act as ---------- makes digital information-processing possible.", c: "switches", w: ["heaters", "coolers"] }
+                ],
+                q2: [
+                    { q: "How many safe ways of processing food are there?", c: "Two", w: ["Three", "Four"] },
+                    { q: "We can preserve food for a long time. (True/False)", c: "True", w: ["False"] },
+                    { q: "Some mined substances are cheap because --------------", c: "they can be found at or near the earth's surface", w: ["they are very rare", "they are imported from space"] }
+                ],
+                q3: [
+                    { q: "Do you know the carpenter? He made this chair. (Join with WHO)", c: "Do you know the carpenter who made this chair?", w: ["Do you know the carpenter whom made this chair?", "Do you know the carpenter whose made this chair?"] },
+                    { q: "The lesson has ---------- early.", c: "been finished", w: ["finished", "be finished"] },
+                    { q: "He is ----------- a strong man that he can carry the box.", c: "such", w: ["too", "so"] }
+                ],
+                q45: [
+                    { q: "Complete the word: en_i_e", c: "entire", w: ["engine", "endive"] },
+                    { q: "Complete the word: ba_e_y", c: "bakery", w: ["barely", "basely"] },
+                    { q: "A device that can do many jobs:", c: "robot", w: ["toxin", "virus"] }
+                ],
+                q6: ["Mining Techniques", "Jam making at Home"]
+            },
+            "2022_t": {
+                title: "2022 - الدور التمهيدي",
+                passage: "Mobile phones are typically small electronic devices. They are telephones that you can carry with you in your hand. They work by sending signals across the globe so that you can communicate with friends, colleagues and family members no matter where you are. Mobile phones can be used to send text messages, to take phone calls, to video chat, and also to perform functions such as searching the web, taking photographs and playing games. They are very useful devices. They keep us connected with our loved ones. However, it is crucial not to overuse mobile phones. They can become addictive and they can also distract us from face to face communication with the people that we see around us. Long hours of mobile phone use in one sitting can have a strain on one's eyes, neck and backbones. They also can sap your precious time.",
+                q1: [
+                    { q: "What are mobile phones?", c: "Small electronic devices that you can carry in your hand", w: ["Large machines used in factories", "A type of food preservation"] },
+                    { q: "How do they work?", c: "By sending signals across the globe", w: ["By using cables underground", "By solar energy only"] },
+                    { q: "Long hours of mobile phone use in one sitting can have...", c: "a strain on eyes, neck and backbones", w: ["a positive effect on health", "no effect at all"] }
+                ],
+                q2: [
+                    { q: "When do we use the boiling water bath method?", c: "With high acidic food", w: ["With low acidic food", "Only with meat"] },
+                    { q: "Industrial pollution has a (negative, positive) impact on human lives and health.", c: "negative", w: ["positive", "neutral"] },
+                    { q: "A vacuum seal prevents (air, water) from getting back into the product.", c: "air", w: ["water", "oil"] }
+                ],
+                q3: [
+                    { q: "The question is very difficult. We can't answer it. (Join using too---to)", c: "The question is too difficult to answer", w: ["The question is too difficult that we can't answer", "The question is very difficult to answer"] },
+                    { q: "What's the name of the lady? She was wearing the blue dress. (who)", c: "What's the name of the lady who was wearing the blue dress?", w: ["What's the name of the lady whom was wearing the blue dress?", "What's the name of the lady whose was wearing the blue dress?"] },
+                    { q: "Avoid (smoke, smoking, smokes) cigarettes.", c: "smoking", w: ["smoke", "smokes"] }
+                ],
+                q45: [
+                    { q: "Complete the word: p_s_e", c: "paste", w: ["posse", "purse"] },
+                    { q: "Complete the word: vi_u_", c: "virus", w: ["visus", "vinum"] },
+                    { q: "A name you choose that isn't your real name:", c: "username", w: ["password", "website"] }
+                ],
+                q6: ["Jam Making at Home", "The Advantages of Mechatronics in Life"]
+            },
+            "2022_1": {
+                title: "2022 - الدور الأول",
+                passage: "Industrial pollution can be defined as the addition of any substance (solid, liquid or gas) or a form of energy to the environment which has harmful or poisonous effects on human lives and health. Its most common forms are: air pollution, water pollution and ground pollution. They are caused by many factors such as dumping of industrial waste into waterways or improper containment of waste, which causes leakage into groundwater and waterways. Industrial pollution can also impact air quality and it can kill animals and plants, damage buildings and generally degrade quality of life.",
+                q1: [
+                    { q: "How many most common forms of industrial pollution are mentioned in the passage?", c: "Three", w: ["Two", "Four"] },
+                    { q: "What effect does industrial pollution have on air quality?", c: "It impacts air quality", w: ["It improves air quality", "It has no effect"] },
+                    { q: "Can pollutants kill animals and plants?", c: "Yes, they can", w: ["No, they can't", "Only plants"] }
+                ],
+                q2: [
+                    { q: "What is mining?", c: "Obtaining or extracting substances from the earth", w: ["Making cars and airplanes", "Preserving food"] },
+                    { q: "Materials recovered by mining include only coal. (True / False)", c: "False", w: ["True"] },
+                    { q: "Mechatronics can be self-adjusting. (True / False)", c: "True", w: ["False"] }
+                ],
+                q3: [
+                    { q: "Yesterday, we watched a film. We watched a football game. (Join with AND)", c: "Yesterday, we watched a film and a football game", w: ["Yesterday, we watched a film and watched a football game", "Yesterday, we watched a film, and we watched a football game"] },
+                    { q: "He has big feet. He can't buy shoes to fit. (such---that)", c: "He has such big feet that he can't buy shoes to fit", w: ["He has so big feet that he can't buy shoes to fit", "He has too big feet that he can't buy shoes to fit"] },
+                    { q: "The crane ---------- in the site last week.", c: "was used", w: ["is used", "used"] }
+                ],
+                q45: [
+                    { q: "Complete the word: ch__se", c: "cheese", w: ["choose", "chase"] },
+                    { q: "Complete the word: up___d", c: "upload", w: ["upheld", "upland"] },
+                    { q: "A place where bread is made:", c: "bakery", w: ["factory", "sewage"] }
+                ],
+                q6: ["The Advantages of Mechatronics in Life", "Jam Making at Home"]
+            },
+            "2022_2": {
+                title: "2022 - الدور الثاني",
+                passage: "Mobile phones are typically small electronic devices. They are telephones that you can carry with you in your hand. They work by sending signals across the globe so that you can communicate with friends, colleagues and family members no matter where you are. Mobile phones can be used to send text messages, to take phone calls, to video chat, and also to perform functions such as searching the web, taking photographs and playing games. They are very useful devices. They keep us connected with our loved ones. However, it is crucial not to overuse mobile phones. They can become addictive and they can also distract us from face to face communication with the people that we see around us. Long hours of mobile phone use in one sitting can have a strain on one's eyes, neck and backbones. They also can sap your precious time.",
+                q1: [
+                    { q: "How do mobile phones work?", c: "By sending signals across the globe", w: ["By using cables", "By solar power"] },
+                    { q: "Are mobile phones useful or useless devices?", c: "Useful devices", w: ["Useless devices", "Only used for games"] },
+                    { q: "Mobile phones can be used to -------------", c: "send text messages, take phone calls, video chat, search the web", w: ["cook food and wash clothes", "travel across the globe"] }
+                ],
+                q2: [
+                    { q: "What do actuators do?", c: "They make things move", w: ["They store data", "They measure temperature"] },
+                    { q: "------------ is added to tomatoes and figs to accomplish the water bath method.", c: "Lemon juice", w: ["Salt", "Sugar"] },
+                    { q: "A vacuum seal prevents air from getting back into the product. (True / False)", c: "True", w: ["False"] }
+                ],
+                q3: [
+                    { q: "The teacher spoke fast. I couldn't understand the lesson. (so---that)", c: "The teacher spoke so fast that I couldn't understand the lesson", w: ["The teacher spoke such fast that I couldn't understand the lesson", "The teacher spoke too fast that I couldn't understand the lesson"] },
+                    { q: "I go to Erbil. I'll book a room. (Before)", c: "Before I go to Erbil, I'll book a room", w: ["I go to Erbil before I'll book a room", "Before I'll book a room, I go to Erbil"] },
+                    { q: "They make these tools of plastic. (Change into Passive Voice)", c: "These tools are made of plastic", w: ["These tools made of plastic", "These tools is made of plastic"] }
+                ],
+                q45: [
+                    { q: "Complete the word: Br_ws_r", c: "Browser", w: ["Brawser", "Brewser"] },
+                    { q: "Complete the word: sp__l", c: "spoil", w: ["spill", "spell"] },
+                    { q: "A mechanical device for moving or controlling a machine:", c: "actuator", w: ["sensor", "website"] }
+                ],
+                q6: ["Mining Techniques", "Internet"]
+            },
+            "2023_t": {
+                title: "2023 - الدور التمهيدي",
+                passage: "The nature of mining processes creates a possible negative influence on the environment both during the mining operations and for years after the mine is closed. The influence has led to most of the world's nations adopting regulations to moderate the negative effects of mining operations. Safety has long been a concern as well, though modern practices have improved safety in mines notably. Working in a coal mine could be a very dangerous job. Accidents happen every day, some of which were not recorded because they were so common. Frequent accidents were due to roofs collapsing in the mine workings or explosions from dangerous hazards underground.",
+                q1: [
+                    { q: "Could working in a coal mine be very dangerous?", c: "Yes, it could", w: ["No, it is safe", "Only in the past"] },
+                    { q: "What does the nature of mining processes create?", c: "A possible negative influence on the environment", w: ["A positive influence on the environment", "No influence at all"] },
+                    { q: "Frequent accidents were due to ----------------", c: "roofs collapsing or explosions from dangerous hazards", w: ["lazy workers", "bad weather"] }
+                ],
+                q2: [
+                    { q: "A vacuum seal (allows, prevents) air getting back to products.", c: "prevents", w: ["allows", "increases"] },
+                    { q: "Some substances are (expensive, cheap) because they are found at or near the surface.", c: "cheap", w: ["expensive", "rare"] },
+                    { q: "(Sensors, actuators) make things move.", c: "actuators", w: ["Sensors", "Printers"] }
+                ],
+                q3: [
+                    { q: "That is the girl. She helped the blind man. (who)", c: "That is the girl who helped the blind man", w: ["That is the girl whom helped the blind man", "That is the girl whose helped the blind man"] },
+                    { q: "Rana was very nervous. She lost her bag. (so---that)", c: "Rana was so nervous that she lost her bag", w: ["Rana was such nervous that she lost her bag", "Rana was too nervous that she lost her bag"] },
+                    { q: "We decided to eat at home ----------- we couldn't go to restaurant. (when, since, until)", c: "since", w: ["when", "until"] }
+                ],
+                q45: [
+                    { q: "Complete the word: p_t_sh", c: "potash", w: ["patash", "petash"] },
+                    { q: "Complete the word: cr_n_", c: "crane", w: ["crone", "crine"] },
+                    { q: "A place where you talk by typing:", c: "chat room", w: ["bakery", "robot"] }
+                ],
+                q6: ["Mining Techniques", "Jam Making at Home"]
+            },
+            "2023_1": {
+                title: "2023 - الدور الأول",
+                passage: "Pure water lacks taste and smell. All living things need water in order to survive. Forty to ninety percent of the weight of all organisms is water. The human body uses water to remove waste and transparent materials throughout the body. Water is one of the only substances to occur as a solid, liquid and gas at ordinary temperatures. Ice (solid) is found on the surface of large and small bodies of water during the winter. Water occurs as a liquid at normal room temperature. Water vapour (gas) occurs as fog and clouds. Occasionally you will find that a glass of water looks cloudy. In a few minutes, the glass of water clears up. The cloudiness is due to tiny air bubbles in the water. Like any bubbles, the air rises to the top of the water and goes into the air, clearing out the water.",
+                q1: [
+                    { q: "What percentage of the weight of all organisms is water?", c: "Forty to ninety percent", w: ["Ten to twenty percent", "One hundred percent"] },
+                    { q: "Water vapour (gas) occurs as ---------- and -----------", c: "fog and clouds", w: ["ice and snow", "rain and rivers"] },
+                    { q: "The cause of cloudiness is the ----------", c: "tiny air bubbles", w: ["minerals", "salt"] }
+                ],
+                q2: [
+                    { q: "What is Mechatronics?", c: "A branch of engineering which involves mechanical and electronic engineering", w: ["A branch of medicine", "A method of food preservation"] },
+                    { q: "What are the causes of water pollution?", c: "Dumping of industrial waste into waterways", w: ["Planting trees", "Recycling plastic"] },
+                    { q: "Do all people follow the same way for preserving food?", c: "No, they don't", w: ["Yes, they do", "Only in cities"] }
+                ],
+                q3: [
+                    { q: "The plane is flying high. We can't be seen. (too---to)", c: "The plane is flying too high to be seen", w: ["The plane is flying too high to we can't be seen", "The plane is flying so high to be seen"] },
+                    { q: "Thamir will buy a new car. The prices go down. (if)", c: "If the prices go down, Thamir will buy a new car", w: ["Thamir will buy a new car if the prices go down.", "Thamir buys a new car if the prices go down."] },
+                    { q: "He is ---------- a slow worker that he never finishes in time. (so, such, very)", c: "such", w: ["so", "very"] }
+                ],
+                q45: [
+                    { q: "Complete the word: se_a_e", c: "sewage", w: ["secage", "sevage"] },
+                    { q: "Complete the word: u_a_ium", c: "uranium", w: ["unanium", "ubanium"] },
+                    { q: "The replacement of unclean air with fresh air:", c: "ventilation", w: ["cyberspace", "acid rain"] }
+                ],
+                q6: ["The Internet", "Jam Making at Home"]
+            },
+            "2023_2": {
+                title: "2023 - الدور الثاني",
+                passage: "Pollution is one of the biggest problems nowadays. There are many kinds of pollution that make life difficult, unhappy and unhealthy. The first kind is 'air pollution' It is caused by factories and car sending out smoke. This kind is commonly found in industrial and big cities. In such cities, air is not clean and unhealthy. The other kind is 'water pollution'. Factories pour chemicals into nearest seas and rivers. It is also caused by tankers spilling oil or towns pouring waste. Those poisonous chemicals and waste make water dirty and unhealthy to drink. They also kill fish that people eat. Many nations work to stop pollution and they succeed. Air and water in their cities have become much cleaner and they now breathe fresh air and drink clean water.",
+                q1: [
+                    { q: "What is the first kind of pollution?", c: "Air pollution", w: ["Water pollution", "Ground pollution"] },
+                    { q: "How does pollution make life?", c: "Difficult, unhappy and unhealthy", w: ["Easy, happy and healthy", "Longer and safer"] },
+                    { q: "Air pollution is caused by ------------ sending out smoke.", c: "factories and cars", w: ["trees and rivers", "houses and schools"] }
+                ],
+                q2: [
+                    { q: "Who create and post information throw web pages?", c: "Companies, organizations and individuals", w: ["Only the government", "Only teachers"] },
+                    { q: "What is a network?", c: "Two or more computers connected together", w: ["A type of food", "A mechanical engine"] },
+                    { q: "Canning is an important safe method for preserving food. (True/False)", c: "True", w: ["False"] }
+                ],
+                q3: [
+                    { q: "I admire people. They have travelled a lot. (who)", c: "I admire people who have travelled a lot", w: ["I admire people whom have travelled a lot", "I admire people whose have travelled a lot"] },
+                    { q: "Amjed has big feet. He can't buy shoes. (such---that)", c: "Amjed has such big feet that he can't buy shoes", w: ["Amjed has so big feet that he can't buy shoes", "Amjed has too big feet that he can't buy shoes"] },
+                    { q: "The machine --------- by the worker yesterday. (oiled, was oiled, is oiled)", c: "was oiled", w: ["is oiled", "oiled"] }
+                ],
+                q45: [
+                    { q: "Complete the word: n_c_ear", c: "nuclear", w: ["noclear", "naclear"] },
+                    { q: "Complete the word: se_s_r", c: "sensor", w: ["sessor", "senser"] },
+                    { q: "Placing waste in an inappropriate area.", c: "dumping", w: ["calculus", "keyboard"] }
+                ],
+                q6: ["The Advantages of Mechatronics in Life", "Mining Techniques"]
+            },
+            "2023_3": {
+                title: "2023 - الدور الثالث",
+                passage: "Canning is an important, safe method for preserving food if practised properly. The canning process involves placing foods in jars or similar containers and heating them to a temperature that destroys micro-organisms that cause food to spoil. During this heating process air is driven out of the jar and as it cools a vacuum seal is formed. This vacuum seal prevents air from getting back into the product bringing with it contaminating micro-organisms. Safe Canning Methods: There are two safe ways of processing food, the boiling water bath method and the pressure canner method.",
+                q1: [
+                    { q: "What does temperature do to micro-organisms?", c: "It destroys micro-organisms", w: ["It makes them grow faster", "It freezes them"] },
+                    { q: "How many safe methods of preserving food are there?", c: "Two", w: ["Three", "Four"] },
+                    { q: "The vacuum seal ----------- from getting back.", c: "prevents air", w: ["allows air", "increases air"] }
+                ],
+                q2: [
+                    { q: "Are mechatronic devices better than their counterparts?", c: "Yes, they are", w: ["No, they aren't", "They are exactly the same"] },
+                    { q: "Mention some high acidic foods.", c: "Fruits and properly pickled vegetables", w: ["Meat and fish", "Bread and butter"] },
+                    { q: "We can preserve food for a long time. (True/False)", c: "True", w: ["False"] }
+                ],
+                q3: [
+                    { q: "I am studying English. My friend knocks the door. (while)", c: "While I am studying English, my friend knocks the door", w: ["I am studying English while my friend knocks the door", "While my friend knocks the door I am studying English"] },
+                    { q: "The house is very big. She cannot clean it. (too---to)", c: "The house is too big to clean", w: ["The house is too big that she cannot clean it", "The house is very big to clean"] },
+                    { q: "This door --------- last year. (is painting, is painted, was painted)", c: "was painted", w: ["is painted", "is painting"] }
+                ],
+                q45: [
+                    { q: "Complete the word: ch_e_e", c: "cheese", w: ["choose", "chase"] },
+                    { q: "Complete the word: r_bo_", c: "robot", w: ["rabot", "rubot"] },
+                    { q: "The opposite word of decrease is --------", c: "increase", w: ["download", "prevent"] }
+                ],
+                q6: ["Industrial pollution", "The Internet"]
+            },
+            "2024_t": {
+                title: "2024 - الدور التمهيدي",
+                passage: "Mobile phone is one of the communication media. It helps us to be connected with the whole world. They work and stay in touch with friends and family. Mobile phone is also known as a smartphone. The high-tech features inside it are what make it an 'intelligent' device. The smartphone today has better computing abilities and advanced functions that help the user to do things quicker and easier. The users can get more programs and applications, such as: sending and receiving emails, texts, photographs or video chatting, browsing the internet, playing games, getting information and other uses. On the other hand, mobile phone causes many problems if we use it for long hours. So, the advantages and disadvantages of using this device depend on how the user uses it.",
+                q1: [
+                    { q: "What is a mobile phone?", c: "One of the communication media", w: ["A device only for taking photos", "A branch of mathematics"] },
+                    { q: "What makes a mobile an intelligent device?", c: "The high-tech features inside it", w: ["Its heavy weight", "Its cheap price"] },
+                    { q: "Why can mobile phones cause many problems?", c: "If we use it for long hours", w: ["If we use it for a few minutes", "If we use it for education"] }
+                ],
+                q2: [
+                    { q: "Why are some mined substances cheap?", c: "Because they can be found at or near the earth's surface", w: ["Because nobody wants them", "Because they are fake"] },
+                    { q: "What is the internet?", c: "A worldwide system of computers", w: ["A local television station", "A mechanical device"] },
+                    { q: "What do actuators do?", c: "They make things move", w: ["They store data", "They print papers"] }
+                ],
+                q3: [
+                    { q: "Anna needed some money. She took a part-time job. (so)", c: "Anna needed some money, so she took a part-time job", w: ["So Anna needed some money, she took a part-time job", "Anna needed some money so that she took a part-time job"] },
+                    { q: "It was raining. I didn't get wet. (although)", c: "Although it was raining, I didn't get wet", w: ["It was raining although I didn't get wet", "Although I didn't get wet, it was raining"] },
+                    { q: "We might play cards. (Change into passive)", c: "Cards might be played", w: ["Cards might play", "Cards are played"] }
+                ],
+                q45: [
+                    { q: "Complete the word: d_a_o_ds", c: "diamonds", w: ["diamands", "diemonds"] },
+                    { q: "Complete the word: ho_ep_ge", c: "homepage", w: ["holepage", "hopepage"] },
+                    { q: "Google is an example of a ---------", c: "search engine", w: ["dustbin", "password"] }
+                ],
+                q6: ["Jam Making at Home", "The Advantages of Mechatronics in Life"]
+            },
+            "2024_1": {
+                title: "2024 - الدور الأول",
+                passage: "Food preservation includes several techniques and methods that help in maintaining the quality and extending the life period of the food. Canning, drying (dehydration), freezing and gas packaging are main methods of food preservation. Canning involves sealing food in airtight containers after heating to destroy microorganisms. Drying is removing moisture from food by various ways such as air drying, sun drying, or by dehydrators; it is commonly used to dry fruits, vegetables, meat and herbs. Freezing means slowing down microbial activity by lowering the temperature to around -18°C (0°F) or lower; freezing helps preserve the nutritional value, texture and flavor of food. The gas packaging method includes replacing the air surrounding the food products with protective gas, usually nitrogen or carbon dioxide; it is used for packing salads, fresh meat and certain snack foods.",
+                q1: [
+                    { q: "What does canning involve?", c: "Sealing food in airtight containers after heating to destroy microorganisms", w: ["Removing moisture from food", "Replacing air with gas"] },
+                    { q: "What does freezing help?", c: "Preserve the nutritional value, texture and flavor of food", w: ["Destroy all microorganisms immediately", "Dry the food quickly"] },
+                    { q: "How does the method of gas packaging work to preserve food?", c: "Replacing the air surrounding the food products with protective gas", w: ["Lowering the temperature to -18°C", "Sealing food in airtight containers"] }
+                ],
+                q2: [
+                    { q: "A tunnel is dug in the ground to take out minerals. (True / False)", c: "True", w: ["False"] },
+                    { q: "The internet is also called a search engine. (True / False)", c: "False", w: ["True"] },
+                    { q: "Working in a coal mine could be very dangerous. (True / False)", c: "True", w: ["False"] }
+                ],
+                q3: [
+                    { q: "The level of oil is low. The engine may not start. (so---that)", c: "The level of oil is so low that the engine may not start", w: ["The level of oil is such low that the engine may not start", "The level of oil is too low that the engine may not start"] },
+                    { q: "I know the boy. His father is a fireman. (whose)", c: "I know the boy whose father is a fireman", w: ["I know the boy who his father is a fireman", "I know the boy whom father is a fireman"] },
+                    { q: "I have a hamburger. (Change into passive)", c: "A hamburger has been eaten by me", w: ["A hamburger is eaten by me", "A hamburger was eaten by me"] }
+                ],
+                q45: [
+                    { q: "Complete the word: upl__d", c: "upload", w: ["uplead", "uplood"] },
+                    { q: "Complete the word: mic_owa_e", c: "microwave", w: ["macrowave", "micrawave"] },
+                    { q: "---------- is a hidden program that can hurt your computer.", c: "virus", w: ["broadband", "calculus"] }
+                ],
+                q6: ["Mining Techniques", "The Advantages of Mechatronics in Life"]
+            },
+            "2025_t": {
+                title: "2025 - الدور التمهيدي",
+                passage: "Technology has become a big part of our daily lives. Over the years, it has developed quickly, helping people in many ways. In the past, people traveled long distances by walking, riding horses or using simple carts. Today, we have cars, trains and airplanes. Modern cars are equipped with GPS system, which help drivers find the fastest routes. Electric cars are becoming popular because they are better for environment. High speed train allow people to travel between cities quickly and comfortably. Even the international travels become easier by airplanes. A journey that took months by sea can now be completed in a few hours. Technology has also improved safety. Vehicles now have advanced systems like airbags, automatic brakes and sensors to prevent accidents. So it has made travel faster, safer and more accessible.",
+                q1: [
+                    { q: "How did people travel long distances in the past?", c: "By walking, riding horses or using simple carts", w: ["By high-speed trains", "By airplanes"] },
+                    { q: "Why are modern cars equipped with GPS?", c: "To help drivers find the fastest routes", w: ["To play music loudly", "To prevent accidents"] },
+                    { q: "How has technology improved safety?", c: "By advanced systems like airbags, automatic brakes and sensors", w: ["By removing seatbelts", "By making cars heavier"] }
+                ],
+                q2: [
+                    { q: "Mining is ------------", c: "obtaining or extracting substances from the earth", w: ["making cars and airplanes", "preserving food"] },
+                    { q: "High acidic foods can be safely canned, using the ------------- method.", c: "boiling water bath", w: ["pressure processing", "gas packaging"] },
+                    { q: "What do electronics connect?", c: "Electronics connect the other parts together", w: ["They connect nothing", "They connect the internet only"] }
+                ],
+                q3: [
+                    { q: "I will be late today --------- my car has broken down. (because/though)", c: "because", w: ["though", "until"] },
+                    { q: "Millions of people will visit the museum. (Change into passive voice)", c: "The museum will be visited by millions of people", w: ["The museum is visited by millions of people", "The museum was visited by millions of people"] },
+                    { q: "The plane is flying high. It cannot be seen. (Join the sentences use; too---to)", c: "The plane is flying too high to be seen", w: ["The plane is flying too high to cannot be seen", "The plane is too flying high to seen"] }
+                ],
+                q45: [
+                    { q: "Complete the word: up_o_d", c: "upload", w: ["uplead", "uplood"] },
+                    { q: "Complete the word: s_n_or", c: "sensor", w: ["sessor", "senser"] },
+                    { q: "Google is an example of a ----------- .", c: "search engine", w: ["detergents", "carbon monoxide"] }
+                ],
+                q6: ["The Internet", "Industrial Pollution"]
+            },
+            "2025_1": {
+                title: "2025 - الدور الأول",
+                passage: "A clean environment is essential for a healthy life. Pollution harms the air, water and land, making it difficult for people and animals to live safely. Each person has a role in protecting the environment and reducing pollution. One of the best ways to keep the environment clean is by reducing waste. Instead of throwing away plastic bottles and bags, people can recycle them. Recycling helps reduce pollution by turning old materials into new products. Planting trees is another way to keep the environment clean, trees absorb carbon dioxide and produce oxygen, making the air fresher. People should also avoid littering and always throw trash in bins. Using public transportation, walking or riding bicycles instead of driving cars can also reduce air pollution.",
+                q1: [
+                    { q: "Why is a clean environment important?", c: "Because it is essential for a healthy life", w: ["To save money", "To build more factories"] },
+                    { q: "How does recycling help reduce pollution?", c: "By turning old materials into new products", w: ["By throwing plastic in bins", "By planting trees"] },
+                    { q: "Why is planting trees important for the environment?", c: "Because trees absorb carbon dioxide and produce oxygen", w: ["Because they give us fruit", "Because they look beautiful"] }
+                ],
+                q2: [
+                    { q: "Why do manufacturers use a vacuum seal during canning process?", c: "To prevent air from getting back into the product", w: ["To make the food sweeter", "To increase the weight of the jar"] },
+                    { q: "What do actuators do?", c: "They make things move", w: ["They store data", "They measure temperature"] },
+                    { q: "Why are some mined substances cheap?", c: "Because they can be found at or near the earth's surface", w: ["Because nobody wants them", "Because they are fake"] }
+                ],
+                q3: [
+                    { q: "My father will buy a new car. He saves enough money. (after)", c: "My father will buy a new car after he saves enough money", w: ["After my father will buy a new car he saves enough money", "My father will buy a new car he saves enough money after"] },
+                    { q: "Mohannad washed the floor. He was watching the soccer match. (while)", c: "Mohannad washed the floor while he was watching the soccer match", w: ["While Mohannad washed the floor he was watching the soccer match", "Mohannad washed the floor he was watching the soccer match while"] },
+                    { q: "Bicycles -------- in the drive way.", c: "mustn't be left", w: ["must leave", "mustn't leave"] }
+                ],
+                q45: [
+                    { q: "Complete the word: r_b_t", c: "robot", w: ["rabot", "rubot"] },
+                    { q: "Complete the word: atm_sph_re", c: "atmosphere", w: ["atmesphere", "atmosfere"] },
+                    { q: "To select an internet link, you -------- it.", c: "click", w: ["upload", "destroy"] }
+                ],
+                q6: ["The Advantages of Mechatronics in Life", "Jam Making at Home"]
+            },
+            "2025_2": {
+                title: "2025 - الدور الثاني",
+                passage: "Raw materials are the basic substances used to produce goods. They can be natural resources like minerals (iron and copper), agricultural products (cotton and wheat) or materials that have been processed from natural resources (steel and plastics). Effective management of raw materials is crucial for smooth production and supply chain operations. Raw materials are the fundamental building blocks for creating finished goods and also they are vital for international trade and commerce growth.",
+                q1: [
+                    { q: "What do we mean by raw materials?", c: "The basic substances used to produce goods", w: ["Finished products ready for sale", "Only agricultural products"] },
+                    { q: "Give examples of mineral product resources.", c: "Iron and copper", w: ["Cotton and wheat", "Steel and plastics"] },
+                    { q: "What are raw materials vital for?", c: "International trade and commerce growth", w: ["Only for building houses", "For polluting the environment"] }
+                ],
+                q2: [
+                    { q: "Why do manufacturers use a vacuum seal?", c: "To prevent air from getting back into the product", w: ["To make the food look better", "To increase moisture"] },
+                    { q: "What have modern practices in mines improved?", c: "Safety in mines", w: ["The color of minerals", "The size of the mines"] },
+                    { q: "Do nations impose restrictions to reduce pollution?", c: "Yes, they do", w: ["No, they don't", "Only in the past"] }
+                ],
+                q3: [
+                    { q: "They went to the bookstore. They didn't have time for the art gallery. (but)", c: "They went to the bookstore but didn't have time for the art gallery", w: ["They went to the bookstore so didn't have time for the art gallery", "They went to the bookstore because didn't have time for the art gallery"] },
+                    { q: "We won't be able to buy a new car. We've saved enough money. (unless)", c: "We won't be able to buy a new car unless we've saved enough money", w: ["Unless we won't be able to buy a new car we've saved enough money", "We won't be able to buy a new car if we've saved enough money"] },
+                    { q: "The doorbell rang while Abdullah (were taking, was taking, taking) a shower.", c: "was taking", w: ["were taking", "taking"] }
+                ],
+                q45: [
+                    { q: "Complete the word: tr__fic", c: "traffic", w: ["trefic", "traphic"] },
+                    { q: "Complete the word: bak__y", c: "bakery", w: ["fakery", "makery"] },
+                    { q: "People love to download music in --------- format.", c: "MP3", w: ["toxic", "inhale"] }
+                ],
+                q6: ["The Internet", "The Advantages of Mechatronics in Life"]
+            },
+            "2025_3": {
+                title: "2025 - الدور الثالث",
+                passage: "The word 'mechatronics' is composed of 'mecha' from mechanism and 'tronics' from electronics. The four main branches of mechatronics are electrical, mechanical, electronic and software engineering. The term mechatronics was coined by Japanese engineer Tetsura Mori from Yasakawa Electric Corporation. A mechatronic system is composed of four prim components. They are sensors, actuators, controllers and mechanical components. There are some disadvantages of mechatronics such as high costs, complex design, and difficult maintenance.",
+                q1: [
+                    { q: "Who coined the term mechatronics?", c: "Tetsura Mori from Yasakawa Electric Corporation", w: ["A British scientist", "An American engineer"] },
+                    { q: "What are the disadvantages of mechatronics?", c: "High costs, complex design, and difficult maintenance", w: ["Low costs and simple design", "It is very slow"] },
+                    { q: "Name the second prime components of a mechatronic system.", c: "Actuators", w: ["Sensors", "Controllers"] }
+                ],
+                q2: [
+                    { q: "What do electronics connect?", c: "Electronics connect the other parts together", w: ["They connect nothing", "They connect the internet"] },
+                    { q: "Why are some mind substances cheap?", c: "Because they can be found at or near the earth's surface", w: ["Because they are fake", "Because nobody wants them"] },
+                    { q: "Is pressure processing of food necessary?", c: "Yes, to destroy spores", w: ["No, it is not", "Only for sweet food"] }
+                ],
+                q3: [
+                    { q: "Let's meet at the museum. Let's meet in front of the park. (or)", c: "Let's meet at the museum or in front of the park", w: ["Let's meet at the museum and in front of the park", "Let's meet at the museum but in front of the park"] },
+                    { q: "Rafid studied very hard. He took the exam on Thursday. (before)", c: "Rafid studied very hard before he took the exam on Thursday", w: ["Before Rafid studied very hard he took the exam on Thursday", "Rafid studied very hard if he took the exam on Thursday"] },
+                    { q: "They can't visit us today (and, since, but) they have an exam.", c: "since", w: ["and", "but"] }
+                ],
+                q45: [
+                    { q: "Complete the word: envi__nment", c: "environment", w: ["envirnment", "enviournment"] },
+                    { q: "Complete the word: nuc__ar", c: "nuclear", w: ["noclear", "naclear"] },
+                    { q: "----------- is emitted by cars.", c: "Carbon monoxide", w: ["Homepage", "Inhale"] }
+                ],
+                q6: ["Jam Making at Home", "The Internet"]
+            },
+            "2026_t": {
+                title: "2026 - الدور التمهيدي",
+                passage: "The word automotive comes from the Greek (autos) (self), and Latin (motive) (of motion) referring to any form of self-powered vehicle. This term first came into use to describe automobiles in 1898. The automotive industry comprises a wide range of companies and organizations involved in the design, marketing, selling, repairing and modification of motor vehicles. China is the world's largest producer of vehicles while Germany is famous for producing iconic cars from brands like Volkswagen, BMW, and Mercedes-Benz. Studies suggest that white color is the safest one because white tends to be the most visible at night.",
+                q1: [
+                    { q: "When did the term automotive first come into use?", c: "In 1898", w: ["In 1998", "In 1889"] },
+                    { q: "Which country is the world's largest producer of vehicles?", c: "China", w: ["Germany", "USA"] },
+                    { q: "Why do studies suggest that white is the safest color for cars?", c: "Because it is the most visible at night", w: ["Because it is cheaper", "Because it looks better"] }
+                ],
+                q2: [
+                    { q: "How do you preserve food at home?", c: "By refrigerating or freezing it", w: ["By leaving it outside", "By washing it"] },
+                    { q: "Who creates and posts information through web pages?", c: "Companies, organizations and individuals", w: ["Only teachers", "Only the government"] },
+                    { q: "What is a network?", c: "Two or more computers connected together", w: ["A mechanical engine", "A type of food"] }
+                ],
+                q3: [
+                    { q: "I will phone you. I arrive in Paris. (Join with AS SOON AS)", c: "I will phone you as soon as I arrive in Paris", w: ["As soon as I will phone you I arrive in Paris", "I will phone you if I arrive in Paris as soon as"] },
+                    { q: "The bell rang while we (eat) lunch. (Correct the verb)", c: "were eating", w: ["eat", "eating"] },
+                    { q: "Ahmed learned the poem. (Passive voice)", c: "The poem was learned by Ahmed", w: ["The poem learned Ahmed", "The poem is learned by Ahmed"] }
+                ],
+                q45: [
+                    { q: "Complete the word: so__drink", c: "softdrink", w: ["souldrink", "somedrink"] },
+                    { q: "Complete the word: actua__r", c: "actuator", w: ["actualor", "actuater"] },
+                    { q: "Google is an example of a -----------.", c: "search engine", w: ["conservation", "upload"] }
+                ],
+                q6: ["Mining Techniques", "Pollution"]
+            }
+        };
+
+        const startScreen = document.getElementById('start-screen');
+        const examScreen = document.getElementById('exam-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const startBtn = document.getElementById('start-btn');
+        const examForm = document.getElementById('exam-form');
+        const dynamicContainer = document.getElementById('dynamic-questions-container');
+        const timerDisplay = document.getElementById('timer-display');
+        const timeElement = document.getElementById('time');
+        const customAlert = document.getElementById('custom-alert');
+        const closeAlertBtn = document.getElementById('close-alert-btn');
+        const translateToggle = document.getElementById('translate-toggle');
+        
+        let timerInterval;
+        let timeLeft = 2 * 60 * 60; // 2 hours
+        let currentExam = null;
+        let correctAnswersMap = {};
+        let isTranslated = false;
+
+        // UI Translation Dictionary
+        const uiTranslations = {
+            "Reading Comprehension": "الاستيعاب القرائي",
+            "Textbooks & Literature": "نصوص الكتاب والأدب",
+            "Grammar & Functions": "القواعد والوظائف",
+            "Vocabulary & Spelling": "المفردات والإملاء",
+            "Written Component (20 Marks)": "الإنشاء (20 درجة)",
+            "Read the following passage carefully:": "اقرأ القطعة الخارجية التالية بعناية:",
+            "Choose the correct answer based on the passage:": "اختر الإجابة الصحيحة بناءً على القطعة:",
+            "Answer or complete the following from your textbook:": "أجب أو أكمل التالي من نصوص الكتاب المنهجية:",
+            "Do as required / Choose the correct option:": "اعمل كما مطلوب / اختر الخيار الصحيح:",
+            "Fill in the blanks and complete the words:": "املا الفراغات وأكمل الكلمات (الإملاء):",
+            "Write a paragraph on ONE of the following topics:": "اكتب إنشاء عن واحد من المواضيع التالية:",
+            "Start typing your paragraph here...": "ابدأ بكتابة الإنشاء هنا..."
+        };
+
+        // Translation Toggle Logic
+        translateToggle.addEventListener('click', () => {
+            isTranslated = !isTranslated;
+            if(isTranslated) {
+                translateToggle.classList.replace('bg-blue-100', 'bg-blue-600');
+                translateToggle.classList.replace('text-blue-700', 'text-white');
+            } else {
+                translateToggle.classList.replace('bg-blue-600', 'bg-blue-100');
+                translateToggle.classList.replace('text-white', 'text-blue-700');
+            }
             
-            // Grammar - Relative Pronouns (41-60)
-            { q: "I visited my friend -------- father is dead.", ar_q: "زرت صديقي -------- والده متوفى.", options: ["Whom", "Whose", "Who"], answer: "Whose" },
-            { q: "What's the name of the lady ----------- was wearing a dress?", ar_q: "ما اسم السيدة ----------- كانت ترتدي فستاناً؟", options: ["which", "whose", "who"], answer: "who" },
-            { q: "I was invited by the professor ----------- I met at the conference.", ar_q: "دعاني الأستاذ ----------- التقيته في المؤتمر.", options: ["whom", "who", "which"], answer: "whom" },
-            { q: "Do you know the carpenter -------- made this chair?", ar_q: "هل تعرف النجار -------- صنع هذا الكرسي؟", options: ["whom", "whose", "who"], answer: "who" },
-            { q: "Hassan is invited by the engineer -------- project is succeeded.", ar_q: "حسن مدعو من قبل المهندس -------- مشروعه نجح.", options: ["Who", "Whom", "Whose"], answer: "Whose" },
-            { q: "Show me the boy to --------- you gave the ball.", ar_q: "أرني الولد الذي --------- أعطيته الكرة.", options: ["which", "whom", "whose"], answer: "whom" },
-            { q: "This is the house -------- I was born in.", ar_q: "هذا هو المنزل -------- ولدت فيه.", options: ["where", "which", "whose"], answer: "where" },
-            { q: "I admire people -------- have travelled a lot.", ar_q: "أنا معجب بالأشخاص -------- سافروا كثيراً.", options: ["whom", "who", "which"], answer: "who" },
-            { q: "I hate coffee shops -------- they play loud music.", ar_q: "أكره المقاهي -------- يعزفون موسيقى صاخبة.", options: ["whom", "where", "which"], answer: "where" },
-            { q: "I know the boy -------- father is a fireman.", ar_q: "أعرف الولد -------- والده رجل إطفاء.", options: ["who", "whose", "whom"], answer: "whose" },
-            { q: "I saw the river --------- you told me about.", ar_q: "رأيت النهر --------- أخبرتني عنه.", options: ["which", "who", "whom"], answer: "which" },
-            { q: "That is the girl -------- helped the blind man.", ar_q: "تلك هي الفتاة -------- ساعدت الرجل الأعمى.", options: ["who", "whom", "where"], answer: "who" },
-            { q: "Here are the letters -------- arrived yesterday.", ar_q: "إليك الرسائل -------- وصلت البارحة.", options: ["who", "which", "whose"], answer: "which" },
-            { q: "Suhad doesn't like films -------- have sad endings.", ar_q: "سهاد لا تحب الأفلام -------- لها نهايات حزينة.", options: ["which", "who", "whose"], answer: "which" },
-            { q: "She gives me a watch -------- is very precious.", ar_q: "أعطتني ساعة -------- ثمينة جداً.", options: ["which", "who", "where"], answer: "which" },
-            { q: "I gave her a watch -------- stopped after two days.", ar_q: "أعطيتها ساعة -------- توقفت بعد يومين.", options: ["that", "who", "whom"], answer: "that" },
-            { q: "What about teachers -------- teach?", ar_q: "ماذا عن المعلمين -------- يدرسون؟", options: ["whom", "who", "which"], answer: "who" },
-            { q: "Do you know the boy -------- father is a fireman?", ar_q: "هل تعرف الولد -------- والده إطفائي؟", options: ["whose", "whom", "which"], answer: "whose" },
-            { q: "Show me the boy to -------- you gave the ball.", ar_q: "أرني الصبي الذي -------- أعطيته الكرة.", options: ["who", "whom", "which"], answer: "whom" },
-            { q: "I admire people -------- have travelled a lot.", ar_q: "أقدر الأشخاص -------- سافروا كثيراً.", options: ["whom", "who", "whose"], answer: "who" },
+            // Apply translation to dynamic elements if exam is loaded
+            if(currentExam) {
+                document.querySelectorAll('.translatable').forEach(el => {
+                    const originalText = el.getAttribute('data-original');
+                    if(isTranslated && uiTranslations[originalText]) {
+                        el.innerText = uiTranslations[originalText];
+                        el.classList.add('arabic-text');
+                    } else {
+                        el.innerText = originalText;
+                        el.classList.remove('arabic-text');
+                    }
+                });
+                
+                const essay = document.getElementById('q6_essay');
+                if(essay) {
+                    essay.placeholder = isTranslated ? uiTranslations["Start typing your paragraph here..."] : "Start typing your paragraph here...";
+                }
+            }
+        });
 
-            // Grammar - So / Such / Too (61-80)
-            { q: "The house is --------- small to live in.", ar_q: "المنزل صغير --------- للعيش فيه.", options: ["two", "too", "to"], answer: "too" },
-            { q: "He is ----------- a strong man that he can carry the box.", ar_q: "إنه رجل قوي ----------- لدرجة أنه يستطيع حمل الصندوق.", options: ["too", "so", "such"], answer: "such" },
-            { q: "The question is ------------ complicated to answer.", ar_q: "السؤال معقد ------------ للإجابة عليه.", options: ["very", "such", "too"], answer: "too" },
-            { q: "He works ----------- slowly that he never finishes in time.", ar_q: "إنه يعمل ببطء ----------- لدرجة أنه لا ينهي عمله في الوقت المحدد.", options: ["so", "such", "as"], answer: "so" },
-            { q: "The plane is flying -------- high to be seen.", ar_q: "الطائرة تحلق عالياً -------- بحيث لا يمكن رؤيتها.", options: ["so", "such", "too"], answer: "too" },
-            { q: "Amjed has -------- big feet that he can't buy shoes.", ar_q: "أمجد لديه أقدام كبيرة -------- لدرجة أنه لا يستطيع شراء أحذية.", options: ["so", "such", "too"], answer: "such" },
-            { q: "The teacher spoke -------- fast that I couldn't understand the lesson.", ar_q: "تحدث المعلم بسرعة -------- لدرجة أنني لم أستطع فهم الدرس.", options: ["so", "such", "too"], answer: "so" },
-            { q: "He has -------- big feet that he can't buy shoes to fit.", ar_q: "لديه أقدام كبيرة -------- لدرجة أنه لا يستطيع شراء حذاء يناسبه.", options: ["so", "such", "too"], answer: "such" },
-            { q: "It was -------- a short holiday that we couldn't visit all the places.", ar_q: "كانت عطلة قصيرة -------- لدرجة أننا لم نتمكن من زيارة جميع الأماكن.", options: ["so", "such", "too"], answer: "such" },
-            { q: "The level of oil is -------- low that the engine may not start.", ar_q: "مستوى الزيت منخفض -------- لدرجة أن المحرك قد لا يعمل.", options: ["so", "such", "too"], answer: "so" },
-            { q: "The exam was -------- easy that everyone passed it.", ar_q: "كان الامتحان سهلاً -------- لدرجة أن الجميع نجح فيه.", options: ["too", "so", "such"], answer: "so" },
-            { q: "Rana was -------- nervous that she lost her bag.", ar_q: "كانت رنا متوترة -------- لدرجة أنها فقدت حقيبتها.", options: ["such", "so", "too"], answer: "so" },
-            { q: "The house is -------- big to clean.", ar_q: "المنزل كبير -------- على التنظيف.", options: ["too", "so", "such"], answer: "too" },
-            { q: "The story was -------- amazing to forget.", ar_q: "كانت القصة رائعة -------- بحيث لا يمكن نسيانها.", options: ["too", "so", "such"], answer: "too" },
-            { q: "He is -------- a slow worker that he never finishes in time.", ar_q: "إنه عامل بطيء -------- لدرجة أنه لا ينهي عمله أبداً في الوقت المحدد.", options: ["so", "such", "very"], answer: "such" },
-            { q: "This question is --------- complicated to answer.", ar_q: "هذا السؤال معقد --------- للإجابة عليه.", options: ["too", "such", "very"], answer: "too" },
-            { q: "Ahmed studied -------- hard that he got high marks.", ar_q: "درس أحمد بجد -------- لدرجة أنه حصل على درجات عالية.", options: ["too", "such", "so"], answer: "so" },
-            { q: "It is -------- a short holiday that we couldn't visit all the places.", ar_q: "إنها عطلة قصيرة -------- لدرجة أننا لم نتمكن من زيارة كل الأماكن.", options: ["such", "so", "too"], answer: "such" },
-            { q: "The question is very difficult. We can't answer it. (Join using too...to)", ar_q: "السؤال صعب جداً. لا يمكننا الإجابة عليه. (اربط باستخدام too...to)", options: ["The question is too difficult to answer", "The question is too difficult that we can't answer", "The question is very difficult to answer"], answer: "The question is too difficult to answer" },
-            { q: "The plane is flying high. It cannot be seen. (Join using too...to)", ar_q: "الطائرة تحلق عالياً. لا يمكن رؤيتها. (اربط باستخدام too...to)", options: ["The plane is flying too high to be seen", "The plane is flying too high to cannot be seen", "The plane is too flying high to seen"], answer: "The plane is flying too high to be seen" },
+        // Populate dropdown menu dynamically
+        const selectBox = document.getElementById('exam-year-select');
+        for (const [key, examObj] of Object.entries(examsDB)) {
+            const option = document.createElement('option');
+            option.value = key;
+            option.innerText = examObj.title;
+            selectBox.appendChild(option);
+        }
 
-            // Grammar - Conjunctions & Conditionals (81-110)
-            { q: "------------ the apartment is close to the beach, we daily go to swim.", ar_q: "------------ الشقة قريبة من الشاطئ، نذهب للسباحة يومياً.", options: ["Until", "So", "Since"], answer: "Since" },
-            { q: "We (will phone, phone) you as soon as we arrive in Paris.", ar_q: "نحن (سنتصل، نتصل) بك بمجرد وصولنا إلى باريس.", options: ["phone", "will phone", "phoned"], answer: "will phone" },
-            { q: "They will travel ----------- they pay all their debts.", ar_q: "سوف يسافرون ----------- يدفعون جميع ديونهم.", options: ["before", "until", "after"], answer: "after" },
-            { q: "Tamir -------- a new car if the prices go down.", ar_q: "تامر -------- سيارة جديدة إذا انخفضت الأسعار.", options: ["buys", "will buy", "bought"], answer: "will buy" },
-            { q: "I heard some noise ---------- I was watching.", ar_q: "سمعت بعض الضوضاء ---------- كنت أشاهد.", options: ["Where", "While", "Which"], answer: "While" },
-            { q: "Everything depends on -------- he repairs his old car or buys a new one.", ar_q: "كل شيء يعتمد على -------- إذا كان سيصلح سيارته القديمة أو يشتري واحدة جديدة.", options: ["whether", "nor", "neither"], answer: "whether" },
-            { q: "Sinan enjoys -------- hunting and fishing.", ar_q: "سنان يستمتع بـ -------- الصيد وصيد الأسماك.", options: ["neither", "either", "both"], answer: "both" },
-            { q: "He is -------- reading nor giving me the chance to read.", ar_q: "إنه -------- يقرأ ولا يعطيني الفرصة للقراءة.", options: ["both", "either", "neither"], answer: "neither" },
-            { q: "I will be late today -------- my car has broken down.", ar_q: "سأتأخر اليوم -------- سيارتي تعطلت.", options: ["because", "though", "until"], answer: "because" },
-            { q: "We decided to eat at home ----------- we couldn't go to restaurant.", ar_q: "قررنا تناول الطعام في المنزل ----------- لم نتمكن من الذهاب إلى المطعم.", options: ["when", "since", "until"], answer: "since" },
-            { q: "I go to Erbil. I'll book a room. (Join with Before)", ar_q: "أذهب إلى أربيل. سأحجز غرفة. (اربط باستخدام Before)", options: ["Before I go to Erbil, I'll book a room.", "I go to Erbil before I'll book a room.", "Before I'll book a room, I go to Erbil."], answer: "Before I go to Erbil, I'll book a room." },
-            { q: "They can't visit us today -------- they have an exam.", ar_q: "لا يمكنهم زيارتنا اليوم -------- لديهم امتحان.", options: ["since", "and", "but"], answer: "since" },
-            { q: "I won't buy anything new -------- I pay all my debts.", ar_q: "لن أشتري أي شيء جديد -------- أدفع جميع ديوني.", options: ["until", "if", "after"], answer: "until" },
-            { q: "-------- it was raining, I didn't get wet.", ar_q: "-------- كانت تمطر، لم أبتل.", options: ["Because", "Although", "If"], answer: "Although" },
-            { q: "I can't go to the office -------- I've found my car keys!", ar_q: "لا أستطيع الذهاب إلى المكتب -------- أجد مفاتيح سيارتتي!", options: ["if", "unless", "when"], answer: "unless" },
-            { q: "They have to wait in class ---------- the teacher comes.", ar_q: "يجب أن ينتظروا في الصف ---------- يأتي المعلم.", options: ["yet", "but", "till"], answer: "till" },
-            { q: "I'd take that job ---------- the salary was better.", ar_q: "كنت سآخذ تلك الوظيفة ---------- كان الراتب أفضل.", options: ["as soon as", "if", "unless"], answer: "if" },
-            { q: "They won't start the match ---------- the rain stops.", ar_q: "لن يبدأوا المباراة ---------- يتوقف المطر.", options: ["until", "because", "so"], answer: "until" },
-            { q: "Let's meet at the museum ---------- in front of the park.", ar_q: "دعنا نلتقي في المتحف ---------- أمام الحديقة.", options: ["or", "but", "since"], answer: "or" },
-            { q: "If you have money, you ------------ a new car.", ar_q: "إذا كان لديك مال، يمكنك ------------ سيارة جديدة.", options: ["buy", "can buy", "could buy"], answer: "can buy" },
-            { q: "Do you need pens ---------- pencils to sign the paper?", ar_q: "هل تحتاج أقلام حبر ---------- أقلام رصاص لتوقيع الورقة؟", options: ["and", "but", "or"], answer: "or" },
-            { q: "Anna needed some money, ---------- she took a part-time job.", ar_q: "احتاجت آنا لبعض المال، ---------- أخذت وظيفة بدوام جزئي.", options: ["so", "because", "although"], answer: "so" },
-            { q: "It is hot ---------- cold, you have to go to school.", ar_q: "الجو حار ---------- بارد، عليك الذهاب إلى المدرسة.", options: ["whether / or", "neither / nor", "both / and"], answer: "whether / or" },
-            { q: "After she ---------- a good house, she'll buy some furniture.", ar_q: "بعد أن ---------- منزلاً جيداً، ستشتري بعض الأثاث.", options: ["find", "finds", "found"], answer: "finds" },
-            { q: "She will move to Basrah when she ---------- a good job.", ar_q: "ستنتقل إلى البصرة عندما ---------- وظيفة جيدة.", options: ["find", "finds", "found"], answer: "finds" },
-            { q: "Maryam tried to read a novel in French, -------- it was too difficult.", ar_q: "حاولت مريم قراءة رواية بالفرنسية، -------- كانت صعبة جداً.", options: ["or", "but", "yet"], answer: "but" },
-            { q: "I put my coat on --------- it was cold.", ar_q: "ارتديت معطفي --------- الجو كان بارداً.", options: ["because", "until", "although"], answer: "because" },
-            { q: "They went to the bookstore --------- they didn't have time for the art gallery.", ar_q: "ذهبوا إلى المكتبة --------- لم يكن لديهم وقت لمعرض الفن.", options: ["but", "so", "since"], answer: "but" },
-            { q: "Layla cried for weeks --------- her mother died.", ar_q: "بكت ليلى لأسابيع --------- توفيت والدتها.", options: ["after", "before", "until"], answer: "after" },
-            { q: "We won't be able to buy a new car --------- we've saved enough money.", ar_q: "لن نتمكن من شراء سيارة جديدة --------- وفرنا ما يكفي من المال.", options: ["unless", "if", "because"], answer: "unless" },
-
-            // Grammar - Verbs & Passive Voice (111-135)
-            { q: "These tools are -------- of plastic.", ar_q: "هذه الأدوات -------- من البلاستيك.", options: ["make", "made", "making"], answer: "made" },
-            { q: "The lesson has ---------- early.", ar_q: "الدرس ---------- مبكراً.", options: ["finished", "be finished", "been finished"], answer: "been finished" },
-            { q: "If you feel ill, you ---------- your medicine.", ar_q: "إذا شعرت بالمرض، ---------- تناول دوائك.", options: ["take", "can take", "could take"], answer: "can take" },
-            { q: "Avoid -------- cigarettes.", ar_q: "تجنب -------- السجائر.", options: ["smoke", "smoking", "smokes"], answer: "smoking" },
-            { q: "The crane ---------- in the site last week.", ar_q: "الرافعة ---------- في الموقع الأسبوع الماضي.", options: ["used", "was used", "is used"], answer: "was used" },
-            { q: "The bottles ----------- of plastic.", ar_q: "الزجاجات ----------- من البلاستيك.", options: ["have made", "are made", "is made"], answer: "are made" },
-            { q: "The machine --------- by the worker yesterday.", ar_q: "الآلة --------- بواسطة العامل أمس.", options: ["oiled", "was oiled", "is oiled"], answer: "was oiled" },
-            { q: "This door --------- last year.", ar_q: "هذا الباب --------- العام الماضي.", options: ["is painting", "is painted", "was painted"], answer: "was painted" },
-            { q: "The doorbell rang while Abdullah -------- a shower.", ar_q: "رن جرس الباب بينما عبد الله -------- حماماً.", options: ["taking", "was taking", "were taking"], answer: "was taking" },
-            { q: "The contract will be -------- by our boss.", ar_q: "العقد سيتم -------- بواسطة رئيسنا.", options: ["sign", "signing", "signed"], answer: "signed" },
-            { q: "Bicycles -------- in the drive way.", ar_q: "الدراجات -------- في الممر.", options: ["must leave", "mustn't leave", "mustn't be left"], answer: "mustn't be left" },
-            { q: "I have a hamburger. (Change into passive)", ar_q: "لدي همبرغر. (حول للمبني للمجهول)", options: ["A hamburger has been eaten by me", "A hamburger is eaten by me", "A hamburger was eaten by me"], answer: "A hamburger has been eaten by me" },
-            { q: "They make these tools of plastic. (Change to passive)", ar_q: "هم يصنعون هذه الأدوات من البلاستيك. (حول للمبني للمجهول)", options: ["These tools are made of plastic", "These tools made of plastic", "These tools is made of plastic"], answer: "These tools are made of plastic" },
-            { q: "Ahmed loves -------- others.", ar_q: "أحمد يحب -------- الآخرين.", options: ["help", "to help", "helped"], answer: "to help" },
-            { q: "While Anwar was ------------ dinner, his friend called him.", ar_q: "بينما أنور كان ------------ العشاء، اتصل به صديقه.", options: ["eats", "eating", "eat"], answer: "eating" },
-            { q: "Jwan rescued three cats. (Change to passive)", ar_q: "جوان أنقذت ثلاث قطط. (حول للمبني للمجهول)", options: ["Three cats were rescued by Jwan", "Three cats are rescued by Jwan", "Three cats rescued Jwan"], answer: "Three cats were rescued by Jwan" },
-            { q: "While she was (cooking / cooked) dinner.", ar_q: "بينما كانت (تطبخ / طبخت) العشاء.", options: ["cooking", "cooked"], answer: "cooking" },
-            { q: "My father has paid the bill. (Change to passive)", ar_q: "والدي دفع الفاتورة. (حول للمبني للمجهول)", options: ["The bill has been paid by my father", "The bill was paid by my father", "The bill is paid by my father"], answer: "The bill has been paid by my father" },
-            { q: "The students handed the report. (Change to passive)", ar_q: "سلم الطلاب التقرير. (حول للمبني للمجهول)", options: ["The report was handed by the students", "The report is handed by the students", "The report has handed by the students"], answer: "The report was handed by the students" },
-            { q: "If you leave early, you --------- there in time.", ar_q: "إذا غادرت مبكراً، --------- إلى هناك في الوقت المناسب.", options: ["will get", "get", "would get"], answer: "will get" },
-            { q: "The work will ----------- tomorrow.", ar_q: "العمل سوف ----------- غداً.", options: ["finished", "been finished", "be finished"], answer: "be finished" },
-            { q: "We might play cards. (Change to passive)", ar_q: "قد نلعب الورق. (حول للمبني للمجهول)", options: ["Cards might be played", "Cards might play", "Cards are played"], answer: "Cards might be played" },
-            { q: "The phone rang while we --------- dinner.", ar_q: "رن الهاتف بينما كنا --------- العشاء.", options: ["eat", "were eating", "eating"], answer: "were eating" },
-            { q: "They built the skyscraper in 1934. (Change to passive)", ar_q: "بنوا ناطحة السحاب عام 1934. (حول للمبني للمجهول)", options: ["The skyscraper was built in 1934", "The skyscraper is built in 1934", "The skyscraper built in 1934"], answer: "The skyscraper was built in 1934" },
-            { q: "Millions of people will visit the museum. (Change to passive)", ar_q: "ملايين الناس سيزورون المتحف. (حول للمبني للمجهول)", options: ["The museum will be visited by millions of people", "The museum is visited by millions of people", "The museum will visit millions of people"], answer: "The museum will be visited by millions of people" },
-
-            // Vocabulary & Definitions (136-165)
-            { q: "A name you choose that isn't your real name:", ar_q: "اسم تختاره وليس اسمك الحقيقي:", options: ["password", "username", "virus"], answer: "username" },
-            { q: "A hidden program that can hurt your computer:", ar_q: "برنامج مخفي يمكن أن يؤذي حاسوبك:", options: ["virus", "sensor", "browser"], answer: "virus" },
-            { q: "Replacement of unclean air with fresh air:", ar_q: "استبدال الهواء غير النظيف بهواء نقي:", options: ["ventilation", "pollution", "dumping"], answer: "ventilation" },
-            { q: "Poisonous materials:", ar_q: "مواد سامة:", options: ["nutrients", "minerals", "toxins"], answer: "toxins" },
-            { q: "A branch of mathematics which focuses on limits:", ar_q: "فرع من الرياضيات يركز على الغايات (النهايات):", options: ["engineering", "calculus", "physics"], answer: "calculus" },
-            { q: "Placing waste in an inappropriate area:", ar_q: "وضع النفايات في منطقة غير مناسبة:", options: ["dumping", "mining", "canning"], answer: "dumping" },
-            { q: "A place where bread is made:", ar_q: "مكان يُصنع فيه الخبز:", options: ["bakery", "factory", "mine"], answer: "bakery" },
-            { q: "A device that can do many jobs:", ar_q: "جهاز يمكنه القيام بالعديد من الوظائف:", options: ["robot", "actuator", "canner"], answer: "robot" },
-            { q: "A product of dairy industry:", ar_q: "منتج من صناعة الألبان:", options: ["yoghurt", "beef", "potash"], answer: "yoghurt" },
-            { q: "A device that measures a physical quality:", ar_q: "جهاز يقيس خاصية فيزيائية:", options: ["sensor", "actuator", "motor"], answer: "sensor" },
-            { q: "A mechanical device for moving or controlling a machine:", ar_q: "جهاز ميكانيكي لتحريك أو التحكم بآلة:", options: ["sensor", "actuator", "interface"], answer: "actuator" },
-            { q: "A kitchen appliance that cooks or heats food:", ar_q: "جهاز مطبخ يطبخ أو يسخن الطعام:", options: ["microwave oven", "dishwasher", "crane"], answer: "microwave oven" },
-            { q: "Garbage that is harmful to health:", ar_q: "قمامة ضارة بالصحة:", options: ["pollutant", "sewage", "acid rain"], answer: "pollutant" },
-            { q: "A place on the internet you can visit:", ar_q: "مكان على الإنترنت يمكنك زيارته:", options: ["website", "browser", "chat room"], answer: "website" },
-            { q: "Waste that humans put down drains:", ar_q: "النفايات التي يضعها البشر في المجاري:", options: ["sewage", "smog", "toxins"], answer: "sewage" },
-            { q: "A flashing line in a computer:", ar_q: "خط وامض في الحاسوب:", options: ["cursor", "interface", "toxin"], answer: "cursor" },
-            { q: "A point of interaction:", ar_q: "نقطة تفاعل (واجهة):", options: ["interface", "dumping", "bakery"], answer: "interface" },
-            { q: "A motor which makes things move:", ar_q: "محرك يجعل الأشياء تتحرك:", options: ["actuator", "robot", "virus"], answer: "actuator" },
-            { q: "The world that only exists in the computer:", ar_q: "العالم الذي يوجد فقط في الحاسوب:", options: ["cyberspace", "ventilation", "acid rain"], answer: "cyberspace" },
-            { q: "Rain that contains harmful chemicals:", ar_q: "مطر يحتوي على مواد كيميائية ضارة:", options: ["acid rain", "pressure canning", "microwave oven"], answer: "acid rain" },
-            { q: "A method that preserves low acidic food:", ar_q: "طريقة تحفظ الأطعمة منخفضة الحموضة:", options: ["pressure canning", "ventilation", "cyberspace"], answer: "pressure canning" },
-            { q: "A piece of jewelry:", ar_q: "قطعة من المجوهرات:", options: ["diamond", "dumping", "calculus"], answer: "diamond" },
-            { q: "A hardware in your computer:", ar_q: "قطعة أجهزة (مكون صلب) في حاسوبك:", options: ["keyboard", "virus", "bakery"], answer: "keyboard" },
-            { q: "A place where you talk by typing:", ar_q: "مكان تتحدث فيه عن طريق الكتابة:", options: ["chat room", "bakery", "robot"], answer: "chat room" },
-            { q: "Index page of a website:", ar_q: "صفحة الفهرس (الرئيسية) لموقع ويب:", options: ["homepage", "virus", "actuator"], answer: "homepage" },
-            { q: "Air pollution caused by aerosol between chemicals:", ar_q: "تلوث الهواء الناجم عن الهباء الجوي بين المواد الكيميائية:", options: ["Smog", "Domestic waste", "Username"], answer: "Smog" },
-            { q: "Garbage that is produced by people in a household:", ar_q: "القمامة التي ينتجها الناس في المنزل:", options: ["Domestic waste", "Microorganism", "Actuator"], answer: "Domestic waste" },
-            { q: "Bacteria, yeasts and molds are:", ar_q: "البكتيريا والخمائر والعفن هي:", options: ["Microorganism", "Interface", "Smog"], answer: "Microorganism" },
-            { q: "A point of interaction between two systems or work groups:", ar_q: "نقطة تفاعل بين نظامين أو مجموعتي عمل:", options: ["Interface", "Actuator", "Username"], answer: "Interface" },
-            { q: "Mechanical device for moving or controlling a machinery system:", ar_q: "جهاز ميكانيكي لتحريك أو التحكم في نظام آلي:", options: ["Actuator", "Smog", "Microorganism"], answer: "Actuator" },
-
-            // Synonyms / Antonyms / Fill in Blanks (166-180)
-            { q: "The opposite word of spoil is --------", ar_q: "الكلمة المعاكسة لـ spoil (يفسد) هي --------", options: ["preserve", "destroy", "increase"], answer: "preserve" },
-            { q: "The opposite of download is ----------", ar_q: "عكس download (تنزيل) هو ----------", options: ["upload", "surf", "click"], answer: "upload" },
-            { q: "Google is an example of a ---------", ar_q: "جوجل هو مثال على ---------", options: ["search engine", "browser", "virus"], answer: "search engine" },
-            { q: "The Earth's ---------- is a thin layer of gases that surround the earth.", ar_q: "---------- الأرض هو طبقة رقيقة من الغازات تحيط بالأرض.", options: ["atmosphere", "ground", "environment"], answer: "atmosphere" },
-            { q: "Air pollution is --------- to everyone.", ar_q: "تلوث الهواء --------- للجميع.", options: ["useful", "harmful", "safe"], answer: "harmful" },
-            { q: "Try to use ---------- that are perfume free.", ar_q: "حاول استخدام ---------- الخالية من العطور.", options: ["detergents", "foods", "gases"], answer: "detergents" },
-            { q: "To select an internet link, you --------- it.", ar_q: "لتحديد رابط إنترنت، تقوم بـ --------- عليه.", options: ["upload", "click", "search"], answer: "click" },
-            { q: "---------- and silver are used in jewelry.", ar_q: "---------- والفضة تستخدم في المجوهرات.", options: ["Gold", "Coal", "Potash"], answer: "Gold" },
-            { q: "People love to download music in --------- format.", ar_q: "يحب الناس تنزيل الموسيقى بصيغة ---------.", options: ["MP3", "PDF", "HTML"], answer: "MP3" },
-            { q: "Synonym of 'rescued':", ar_q: "مرادف 'rescued' (أنقذ):", options: ["set free", "stuck", "wasted"], answer: "set free" },
-            { q: "Synonym of 'entire':", ar_q: "مرادف 'entire' (بأكمله):", options: ["whole", "half", "part"], answer: "whole" },
-            { q: "Synonym of 'ecstatic':", ar_q: "مرادف 'ecstatic' (في غاية السعادة):", options: ["overjoyed", "sad", "stuck"], answer: "overjoyed" },
-            { q: "Synonym of 'glued':", ar_q: "مرادف 'glued' (ملتصق/مسمر):", options: ["stuck", "set free", "motivation"], answer: "stuck" },
-            { q: "Synonym of 'in vain':", ar_q: "مرادف 'in vain' (عبثاً):", options: ["wasted", "successful", "overjoyed"], answer: "wasted" },
-            { q: "Synonym of 'inspiration':", ar_q: "مرادف 'inspiration' (إلهام):", options: ["motivation", "stuck", "wasted"], answer: "motivation" },
-
-            // Odd One Out (181-200)
-            { q: "Which word is the odd one out? (send, lead, build, said)", ar_q: "أي كلمة هي الغريبة؟ (send, lead, build, said)", options: ["said", "send", "build"], answer: "said" },
-            { q: "Which word is the odd one out? (iron, gold, silver, wood)", ar_q: "أي كلمة هي الغريبة؟ (iron, gold, silver, wood)", options: ["wood", "iron", "gold"], answer: "wood" },
-            { q: "Which word is the odd one out? (rain, quick, clever, slow)", ar_q: "أي كلمة هي الغريبة؟ (rain, quick, clever, slow)", options: ["rain", "quick", "slow"], answer: "rain" },
-            { q: "Which word is the odd one out? (to, in, both, at)", ar_q: "أي كلمة هي الغريبة؟ (to, in, both, at)", options: ["both", "to", "at"], answer: "both" },
-            { q: "Which word is the odd one out? (potash, copper, coal, jam)", ar_q: "أي كلمة هي الغريبة؟ (potash, copper, coal, jam)", options: ["jam", "coal", "potash"], answer: "jam" },
-            { q: "Which word is the odd one out? (tomato paste, beef, ink, milk)", ar_q: "أي كلمة هي الغريبة؟ (tomato paste, beef, ink, milk)", options: ["ink", "beef", "milk"], answer: "ink" },
-            { q: "Which word is the odd one out? (online, calculus, interface, sensor)", ar_q: "أي كلمة هي الغريبة؟ (online, calculus, interface, sensor)", options: ["online", "interface", "sensor"], answer: "online" },
-            { q: "Which word is the odd one out? (smog, toxins, acid rain, uranium)", ar_q: "أي كلمة هي الغريبة؟ (smog, toxins, acid rain, uranium)", options: ["uranium", "smog", "toxins"], answer: "uranium" },
-            { q: "Which word is the odd one out? (beef, gold, stone, coal)", ar_q: "أي كلمة هي الغريبة؟ (beef, gold, stone, coal)", options: ["beef", "gold", "stone"], answer: "beef" },
-            { q: "Which word is the odd one out? (poisons, toxins, spores, foods)", ar_q: "أي كلمة هي الغريبة؟ (poisons, toxins, spores, foods)", options: ["foods", "toxins", "spores"], answer: "foods" },
-            { q: "Which word is the odd one out? (said, lend, sold, made)", ar_q: "أي كلمة هي الغريبة؟ (said, lend, sold, made)", options: ["lend", "said", "sold"], answer: "lend" },
-            { q: "Which word is the odd one out? (although, after, until, when)", ar_q: "أي كلمة هي الغريبة؟ (although, after, until, when)", options: ["although", "after", "until"], answer: "although" },
-            { q: "Which word is the odd one out? (slow, quick, nice, well)", ar_q: "أي كلمة هي الغريبة؟ (slow, quick, nice, well)", options: ["well", "nice", "slow"], answer: "well" },
-            { q: "Which word is the odd one out? (or, so, go, and)", ar_q: "أي كلمة هي الغريبة؟ (or, so, go, and)", options: ["go", "or", "and"], answer: "go" },
-            { q: "Which word is the odd one out? (gold, picks, stone, iron)", ar_q: "أي كلمة هي الغريبة؟ (gold, picks, stone, iron)", options: ["picks", "gold", "iron"], answer: "picks" },
-            { q: "Which word is the odd one out? (stay, built, found, meant)", ar_q: "أي كلمة هي الغريبة؟ (stay, built, found, meant)", options: ["stay", "built", "meant"], answer: "stay" },
-            { q: "Which word is the odd one out? (tomato, bread, stone, beef)", ar_q: "أي كلمة هي الغريبة؟ (tomato, bread, stone, beef)", options: ["stone", "tomato", "beef"], answer: "stone" },
-            { q: "Which word is the odd one out? (made, carried, passed, talked)", ar_q: "أي كلمة هي الغريبة؟ (made, carried, passed, talked)", options: ["made", "carried", "passed"], answer: "made" },
-            { q: "Which word is the odd one out? (since, must, yet, although)", ar_q: "أي كلمة هي الغريبة؟ (since, must, yet, although)", options: ["must", "since", "yet"], answer: "must" },
-            { q: "Which word is the odd one out? (smart, quick, rich, well)", ar_q: "أي كلمة هي الغريبة؟ (smart, quick, rich, well)", options: ["well", "smart", "quick"], answer: "well" }
-        ];
-
-        // Shuffle questions to make it random every time
-        function shuffleArray(array) {
+        // Shuffle utility function
+        function shuffle(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [array[i], array[j]] = [array[j], array[i]];
             }
+            return array;
         }
 
-        // Initialize App State
-        let currentQuestionIndex = 0;
-        let score = 0;
-        let selectedQuestions = [];
-        let isTranslated = false; // State for translation
+        // Custom Alert Logic
+        function showAlert(title, message) {
+            document.getElementById('alert-title').innerText = title;
+            document.getElementById('alert-message').innerText = message;
+            customAlert.classList.remove('hide');
+        }
 
-        // DOM Elements
-        const startScreen = document.getElementById('start-screen');
-        const quizScreen = document.getElementById('quiz-screen');
-        const resultScreen = document.getElementById('result-screen');
-        const startBtn = document.getElementById('start-btn');
-        const nextBtn = document.getElementById('next-btn');
-        const restartBtn = document.getElementById('restart-btn');
-        const translateBtn = document.getElementById('translate-btn'); // Translate Button
-        
-        const questionText = document.getElementById('question-text');
-        const questionTranslation = document.getElementById('question-translation'); // Translation Text
-        const optionsContainer = document.getElementById('options-container');
-        const questionCounter = document.getElementById('question-counter');
-        const scoreCounter = document.getElementById('score-counter');
-        const progressBar = document.getElementById('progress-bar');
-        
-        // Final screen elements
-        const finalScore = document.getElementById('final-score');
-        const resultMessage = document.getElementById('result-message');
-        const resultIcon = document.getElementById('result-icon');
-        const resultTitle = document.getElementById('result-title');
+        closeAlertBtn.addEventListener('click', () => {
+            customAlert.classList.add('hide');
+        });
 
-        // Start Quiz
         startBtn.addEventListener('click', () => {
-            // Prepare questions (all 200)
-            selectedQuestions = [...quizData];
-            shuffleArray(selectedQuestions);
+            const studentName = document.getElementById('student-name').value.trim();
+            const yearSelect = document.getElementById('exam-year-select').value;
             
-            // Reset state
-            currentQuestionIndex = 0;
-            score = 0;
-            isTranslated = false;
+            if(!studentName) {
+                showAlert("تنبيه هام", "يرجى كتابة اسمك قبل البدء بالامتحان.");
+                return;
+            }
+            if(!yearSelect) {
+                showAlert("اختيار السنة", "يرجى اختيار السنة والدور من القائمة المنسدلة.");
+                return;
+            }
+
+            // Init Exam Data
+            currentExam = examsDB[yearSelect];
+            document.getElementById('exam-title-display').innerText = currentExam.title;
+            document.getElementById('display-name').innerText = studentName;
+            document.getElementById('result-name').innerText = studentName;
             
-            // Switch screens
+            buildExamDOM();
+
+            // Switch Screens
             startScreen.classList.add('hide');
-            quizScreen.classList.remove('hide');
-            
-            loadQuestion();
+            examScreen.classList.remove('hide');
+            timerDisplay.classList.remove('hide');
+
+            // Start Timer
+            startTimer();
+            window.scrollTo(0,0);
         });
 
-        // Toggle Translation Logic
-        translateBtn.addEventListener('click', () => {
-            isTranslated = !isTranslated;
-            if(isTranslated) {
-                questionTranslation.classList.remove('hide');
-                translateBtn.classList.replace('bg-blue-100', 'bg-blue-600');
-                translateBtn.classList.replace('text-blue-700', 'text-white');
-            } else {
-                questionTranslation.classList.add('hide');
-                translateBtn.classList.replace('bg-blue-600', 'bg-blue-100');
-                translateBtn.classList.replace('text-white', 'text-blue-700');
-            }
-        });
-
-        // Load Question
-        function loadQuestion() {
-            // Hide next button initially
-            nextBtn.classList.add('hide');
-            
-            // Maintain translation state across questions, or reset it:
-            isTranslated = false;
-            questionTranslation.classList.add('hide');
-            translateBtn.classList.replace('bg-blue-600', 'bg-blue-100');
-            translateBtn.classList.replace('text-white', 'text-blue-700');
-            
-            // Update counters and progress
-            questionCounter.innerText = `Question: ${currentQuestionIndex + 1}/${selectedQuestions.length}`;
-            scoreCounter.innerHTML = `<i class="fa-solid fa-star mr-1"></i> Score: ${score}`;
-            const progressPercentage = ((currentQuestionIndex) / selectedQuestions.length) * 100;
-            progressBar.style.width = `${progressPercentage}%`;
-
-            // Get current question object
-            const currentQ = selectedQuestions[currentQuestionIndex];
-            
-            // Render Question Text and Translation
-            questionText.innerText = `${currentQuestionIndex + 1}. ${currentQ.q}`;
-            questionTranslation.innerText = currentQ.ar_q;
-            
-            // Render Options
-            optionsContainer.innerHTML = '';
-            
-            // Shuffle options for this question
-            let options = [...currentQ.options];
-            shuffleArray(options);
-
-            options.forEach(option => {
-                const btn = document.createElement('button');
-                btn.innerText = option;
-                btn.className = "option-btn w-full text-left p-4 rounded-xl border-2 border-gray-200 bg-white hover:border-indigo-400 hover:bg-indigo-50 font-medium text-gray-700 outline-none";
-                
-                btn.addEventListener('click', () => checkAnswer(btn, option, currentQ.answer));
-                
-                optionsContainer.appendChild(btn);
-            });
-        }
-
-        // Check Answer
-        function checkAnswer(selectedBtn, selectedAnswer, correctAnswer) {
-            const allBtns = optionsContainer.querySelectorAll('button');
-            
-            // Disable all buttons to prevent multiple clicks
-            allBtns.forEach(btn => {
-                btn.disabled = true;
-                btn.classList.add('cursor-not-allowed', 'opacity-90');
-                
-                // Highlight the correct answer anyway
-                if (btn.innerText === correctAnswer) {
-                    btn.classList.remove('border-gray-200', 'hover:border-indigo-400', 'hover:bg-indigo-50');
-                    btn.classList.add('correct-answer');
-                    // Add check icon
-                    btn.innerHTML += ' <i class="fa-solid fa-circle-check float-right text-xl mt-0.5"></i>';
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    autoSubmitExam();
+                } else {
+                    timeLeft--;
+                    updateTimerDisplay();
                 }
-            });
-
-            // If selected is wrong, highlight it red
-            if (selectedAnswer !== correctAnswer) {
-                selectedBtn.classList.remove('border-gray-200', 'hover:border-indigo-400', 'hover:bg-indigo-50');
-                selectedBtn.classList.add('wrong-answer');
-                // Add cross icon
-                selectedBtn.innerHTML += ' <i class="fa-solid fa-circle-xmark float-right text-xl mt-0.5"></i>';
-            } else {
-                score++;
-                scoreCounter.innerHTML = `<i class="fa-solid fa-star mr-1"></i> Score: ${score}`;
-            }
-
-            // Show Next Button
-            nextBtn.classList.remove('hide');
+            }, 1000);
         }
 
-        // Next Question Button Click
-        nextBtn.addEventListener('click', () => {
-            currentQuestionIndex++;
+        function updateTimerDisplay() {
+            const hours = Math.floor(timeLeft / 3600);
+            const minutes = Math.floor((timeLeft % 3600) / 60);
+            const seconds = timeLeft % 60;
+            timeElement.innerText = 
+                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
             
-            if (currentQuestionIndex < selectedQuestions.length) {
-                loadQuestion();
-            } else {
-                showResults();
+            if (timeLeft < 900) { // 15 minutes left warning
+                timerDisplay.classList.remove('text-yellow-400');
+                timerDisplay.classList.add('text-red-500', 'animate-pulse');
             }
-        });
+        }
 
-        // Show Final Results
-        function showResults() {
-            quizScreen.classList.add('hide');
+        function autoSubmitExam() {
+            showAlert("انتهى الوقت!", "سيتم تسليم الإجابات وتصحيح ما قمت بحله تلقائياً.");
+            
+            // Bypass HTML5 validation for incomplete fields when time is up
+            const inputs = examForm.querySelectorAll('[required]');
+            inputs.forEach(input => input.removeAttribute('required'));
+
+            setTimeout(() => {
+                examForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+            }, 3000);
+        }
+
+        function buildExamDOM() {
+            dynamicContainer.innerHTML = '';
+            correctAnswersMap = {};
+
+            // Helper to build a question block
+            function buildSection(sectionId, title, titleClass, bgClass, iconClass, description, qData, marks) {
+                let translatedTitle = isTranslated && uiTranslations[title] ? uiTranslations[title] : title;
+                let html = `
+                    <div class="question-block" id="${sectionId}-block">
+                        <h3 class="text-2xl font-bold mb-4 ${titleClass} flex items-center">
+                            <span class="${bgClass} ${titleClass} px-3 py-1 rounded mr-3 border shadow-sm">${iconClass}</span>
+                            <span class="translatable ${isTranslated ? 'arabic-text' : ''}" data-original="${title}">${translatedTitle}</span> <span class="ml-2">(${marks} Marks)</span>
+                        </h3>
+                        ${description ? `<div class="mb-6 font-medium text-gray-700">${description}</div>` : ''}
+                        <div class="space-y-6">
+                `;
+                
+                qData.forEach((qObj, idx) => {
+                    let inputName = `${sectionId}_${idx}`;
+                    correctAnswersMap[inputName] = qObj.c;
+                    
+                    // Combine correct and wrong options and shuffle
+                    let optionsArray = [qObj.c, ...qObj.w];
+                    optionsArray = shuffle(optionsArray);
+                    
+                    html += `<div class="bg-gray-50 p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                                <p class="font-bold text-gray-800 mb-3 text-lg"><span class="text-blue-600 mr-1">${idx + 1}.</span> ${qObj.q}</p>
+                                <div class="grid grid-cols-1 md:grid-cols-1 gap-3 mt-2">`;
+                    
+                    optionsArray.forEach(opt => {
+                        html += `
+                            <label class="cursor-pointer">
+                                <input type="radio" name="${inputName}" value="${opt}" class="radio-custom hidden" required>
+                                <div class="border-2 border-gray-300 rounded-lg p-3 transition-colors font-sans text-md bg-white hover:border-blue-300">${opt}</div>
+                            </label>
+                        `;
+                    });
+                    html += `</div></div>`;
+                });
+                
+                html += `</div></div>`;
+                dynamicContainer.innerHTML += html;
+            }
+
+            // --- Q1: Reading Comprehension ---
+            let readPassageStr = "Read the following passage carefully:";
+            let chooseAnsStr = "Choose the correct answer based on the passage:";
+            let q1Desc = `<div class="bg-indigo-50 p-6 rounded-lg border border-indigo-100 shadow-inner text-gray-800 text-base leading-relaxed text-justify mb-4 font-serif"><strong class="translatable ${isTranslated ? 'arabic-text' : ''}" data-original="${readPassageStr}">${isTranslated ? uiTranslations[readPassageStr] : readPassageStr}</strong><br><br>${currentExam.passage}</div><p class="font-bold italic text-indigo-700 translatable ${isTranslated ? 'arabic-text' : ''}" data-original="${chooseAnsStr}">${isTranslated ? uiTranslations[chooseAnsStr] : chooseAnsStr}</p>`;
+            buildSection('q1', 'Reading Comprehension', 'text-indigo-800', 'bg-indigo-100', 'Q1', q1Desc, currentExam.q1, 20);
+
+            // --- Q2: Textbooks ---
+            let ansTextStr = "Answer or complete the following from your textbook:";
+            buildSection('q2', 'Textbooks & Literature', 'text-emerald-800', 'bg-emerald-100', 'Q2', `<p class="font-bold italic text-emerald-700 translatable ${isTranslated ? 'arabic-text' : ''}" data-original="${ansTextStr}">${isTranslated ? uiTranslations[ansTextStr] : ansTextStr}</p>`, currentExam.q2, 15);
+
+            // --- Q3: Grammar ---
+            let doReqStr = "Do as required / Choose the correct option:";
+            buildSection('q3', 'Grammar & Functions', 'text-purple-800', 'bg-purple-100', 'Q3', `<p class="font-bold italic text-purple-700 translatable ${isTranslated ? 'arabic-text' : ''}" data-original="${doReqStr}">${isTranslated ? uiTranslations[doReqStr] : doReqStr}</p>`, currentExam.q3, 20);
+
+            // --- Q4&5: Vocabulary & Spelling ---
+            let fillBlanksStr = "Fill in the blanks and complete the words:";
+            buildSection('q45', 'Vocabulary & Spelling', 'text-orange-800', 'bg-orange-100', 'Q4&5', `<p class="font-bold italic text-orange-700 translatable ${isTranslated ? 'arabic-text' : ''}" data-original="${fillBlanksStr}">${isTranslated ? uiTranslations[fillBlanksStr] : fillBlanksStr}</p>`, currentExam.q45, 25);
+
+            // --- Q6: Composition ---
+            let writtenCompStr = "Written Component (20 Marks)";
+            let writeParaStr = "Write a paragraph on ONE of the following topics:";
+            let placeholderStr = "Start typing your paragraph here...";
+            
+            let q6HTML = `
+                <div class="question-block border-l-4 border-l-blue-600 shadow-lg">
+                    <h3 class="text-2xl font-bold mb-4 text-blue-800 flex items-center">
+                        <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded mr-3 border border-blue-200">Q6</span>
+                        <span class="translatable ${isTranslated ? 'arabic-text' : ''}" data-original="${writtenCompStr}">${isTranslated ? uiTranslations[writtenCompStr] : writtenCompStr}</span>
+                    </h3>
+                    <div class="bg-blue-50 p-5 rounded-xl border border-blue-100 mb-6">
+                        <p class="font-bold text-gray-800 text-lg mb-2"><span class="translatable ${isTranslated ? 'arabic-text' : ''}" data-original="${writeParaStr}">${isTranslated ? uiTranslations[writeParaStr] : writeParaStr}</span></p>
+                        <ol class="list-decimal list-inside ml-2 mt-2 space-y-2 font-sans text-blue-900 font-bold text-lg">
+                            <li>${currentExam.q6[0]}</li>
+                            <li>${currentExam.q6[1]}</li>
+                        </ol>
+                    </div>
+                    <textarea id="q6_essay" rows="12" class="w-full border-2 border-gray-300 rounded-xl p-4 focus:ring-4 focus:ring-blue-200 focus:border-blue-500 font-sans text-gray-800 resize-y text-lg" placeholder="${isTranslated ? uiTranslations[placeholderStr] : placeholderStr}" required></textarea>
+                    <div class="mt-3 flex items-center text-sm text-gray-500 italic bg-gray-50 p-2 rounded">
+                        <i class="fa-solid fa-circle-exclamation mr-2 text-yellow-500"></i> This section will be recorded but requires manual grading by the teacher.
+                    </div>
+                </div>
+            `;
+            dynamicContainer.innerHTML += q6HTML;
+        }
+
+        examForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            // Stop timer
+            clearInterval(timerInterval);
+            timerDisplay.classList.add('hide');
+
+            const formData = new FormData(examForm);
+            
+            // Marks mapping
+            let scores = { q1: 0, q2: 0, q3: 0, q45: 0 };
+            
+            // Calculate automatically
+            for (let [key, correctVal] of Object.entries(correctAnswersMap)) {
+                let userVal = formData.get(key);
+                if(userVal === correctVal) {
+                    if(key.startsWith('q1')) scores.q1 += (20 / currentExam.q1.length);
+                    else if(key.startsWith('q2')) scores.q2 += (15 / currentExam.q2.length);
+                    else if(key.startsWith('q3')) scores.q3 += (20 / currentExam.q3.length);
+                    else if(key.startsWith('q45')) scores.q45 += (25 / currentExam.q45.length);
+                }
+            }
+
+            // Rounding scores
+            scores.q1 = Math.round(scores.q1);
+            scores.q2 = Math.round(scores.q2);
+            scores.q3 = Math.round(scores.q3);
+            scores.q45 = Math.round(scores.q45);
+            let totalScore = scores.q1 + scores.q2 + scores.q3 + scores.q45;
+
+            // Populate Results
+            document.getElementById('score-q1').innerText = `${scores.q1}/20`;
+            document.getElementById('score-q2').innerText = `${scores.q2}/15`;
+            document.getElementById('score-q3').innerText = `${scores.q3}/20`;
+            document.getElementById('score-q45').innerText = `${scores.q45}/25`;
+            document.getElementById('final-score').innerText = totalScore;
+
+            // Color Circle
+            const circle = document.getElementById('score-circle');
+            circle.className = "w-36 h-36 mx-auto rounded-full border-8 flex items-center justify-center mb-6 relative shadow-inner bg-gray-50"; // reset
+            if(totalScore >= 65) circle.classList.add('border-green-500', 'text-green-600');
+            else if(totalScore >= 40) circle.classList.add('border-yellow-500', 'text-yellow-600');
+            else circle.classList.add('border-red-500', 'text-red-600');
+
+            // Switch Screens
+            examScreen.classList.add('hide');
             resultScreen.classList.remove('hide');
-            
-            finalScore.innerText = score;
-            document.querySelector('#result-screen p span.text-gray-800').innerText = selectedQuestions.length;
-            
-            const percentage = (score / selectedQuestions.length) * 100;
-            
-            if (percentage >= 90) {
-                resultIcon.innerHTML = '<i class="fa-solid fa-trophy text-yellow-400"></i>';
-                resultTitle.innerText = 'Excellent Work!';
-                resultTitle.className = 'text-3xl font-bold text-yellow-500 mb-4';
-                resultMessage.innerText = 'You are fully prepared for the exam!';
-                resultMessage.className = 'text-lg font-medium mb-8 text-green-600';
-            } else if (percentage >= 70) {
-                resultIcon.innerHTML = '<i class="fa-solid fa-thumbs-up text-blue-500"></i>';
-                resultTitle.innerText = 'Good Job!';
-                resultTitle.className = 'text-3xl font-bold text-blue-600 mb-4';
-                resultMessage.innerText = 'You have a solid understanding, but keep practicing.';
-                resultMessage.className = 'text-lg font-medium mb-8 text-blue-600';
-            } else if (percentage >= 50) {
-                resultIcon.innerHTML = '<i class="fa-solid fa-face-smile text-orange-400"></i>';
-                resultTitle.innerText = 'Not Bad!';
-                resultTitle.className = 'text-3xl font-bold text-orange-500 mb-4';
-                resultMessage.innerText = 'You passed, but you should review the materials more.';
-                resultMessage.className = 'text-lg font-medium mb-8 text-orange-600';
-            } else {
-                resultIcon.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-red-500"></i>';
-                resultTitle.innerText = 'Needs Improvement';
-                resultTitle.className = 'text-3xl font-bold text-red-600 mb-4';
-                resultMessage.innerText = 'You should definitely study the past exams again.';
-                resultMessage.className = 'text-lg font-medium mb-8 text-red-600';
-            }
-        }
-
-        // Restart Quiz
-        restartBtn.addEventListener('click', () => {
-            resultScreen.classList.add('hide');
-            startScreen.classList.remove('hide');
+            window.scrollTo(0,0);
         });
 
     </script>
